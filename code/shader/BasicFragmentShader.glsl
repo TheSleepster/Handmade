@@ -1,8 +1,21 @@
 #version 430 core
 
-layout (location = 0) out vec4 FragColor;
+// Input
+layout(location = 0) in vec2 TextureCoordsIn;
+
+// Output
+layout(location = 0) out vec4 FragColor;
+
+// Binding
+layout(binding = 0) uniform sampler2D TextureAtlas;
 
 void main() 
 {
-    FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    vec4 TextureColor = texelFetch(TextureAtlas, ivec2(TextureCoordsIn), 0);
+
+    if(TextureColor.a == 0) 
+    {
+        discard;
+    }
+    FragColor = TextureColor;
 }

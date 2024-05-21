@@ -81,13 +81,9 @@ Win32MainWindowCallback(HWND    hWnd,
         case WM_SIZE: 
         {
             RECT Rect = {};
-            GetClientRect(hWnd, &Rect);
+            GetWindowRect(hWnd, &Rect);
             WindowData.WindowWidth = Rect.right - Rect.left;
             WindowData.WindowHeight = Rect.bottom - Rect.top;
-        }break;
-        case WM_KEYDOWN: 
-        {
-            WindowData.GlobalRunning = false;
         }break;
         default: 
         { 
@@ -182,9 +178,6 @@ WinMain(HINSTANCE hInstance,
 
         if(WindowHandle) 
         {
-            // TODO : Figure out if we can use this as a bump allocated thing, since this is in essence an
-            // arena allocation method.
-            // Also check to see if we can't just use VirtualAlloc to just make everything at the start
             BumpAllocator TransientStorage = MakeBumpAllocator(Megabytes(50));
             InitializeOpenGLRenderer(&TransientStorage);
 
@@ -198,7 +191,8 @@ WinMain(HINSTANCE hInstance,
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
                 }
-                GameUpdateAndRender(WindowData, &TransientStorage);
+                GameUpdate(WindowData, &TransientStorage);
+                OpenGLRender(WindowData);
             }
         }
         else 
