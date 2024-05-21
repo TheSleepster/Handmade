@@ -1,4 +1,6 @@
 #include "win32_Sugar.h"
+#include "Sugar.h"
+#include "SugarAPI.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define EXTRA_LEAN
@@ -7,11 +9,56 @@
 #include "../data/deps/OpenGL/GLL.h"
 
 #include "Sugar_OpenGLRenderer.cpp"
-#include "Sugar.cpp"
+
+struct Win32GameCode 
+{
+    HMODULE GameCodeDLL;
+    FILETIME DLLLastWriteTime;
+
+    game_update_and_render *UpdateAndRender;
+
+    bool IsValid;
+};
 
 global_variable Win32_WindowData WindowData;
 global_variable PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr; 
 global_variable PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr; 
+
+internal Win32GameCode
+Win32LoadGamecode(char *SourceDLLName) 
+{ 
+    Win32GameCode Result = {};
+
+    char *TempDLLName = "GamecodeTemp.dll";
+    Result.DLLLastWriteTime = Win32GetLastWriteTime(SourceDLLName);
+
+    CopyFile(SourceDLLName, TempDLLName, FALSE);
+    Result.GameCodeDLL = LoadLibraryA(TempDLLName);
+
+    if(Result.GameCodeDLL) 
+    {
+        Result.UpdateAndRender = 
+            (game_update_and_render *)GetProcAddress(Result.GameCodeDLL, "GameUpdateAndRender"); 
+        Result.IsValid = (Result.UpdateAndRender);
+    }
+    if(!Result.IsValid) 
+    {
+        Result.UpdateAndRender= GameUpdateAndRenderStub;
+    }
+    return(Result);
+}
+
+internal void 
+Win32UnloadGamecode(Win32GameCode *Gamecode) 
+{
+    if(Gamecode->GameCodeDLL) 
+    {
+        FreeLibrary(Gamecode->GameCodeDLL);
+        Gamecode->GameCodeDLL = 0;
+    }
+    Gamecode->IsValid = false;
+    Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
+}
 
 internal void
 Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window) 
@@ -178,21 +225,37 @@ WinMain(HINSTANCE hInstance,
 
         if(WindowHandle) 
         {
-            BumpAllocator TransientStorage = MakeBumpAllocator(Megabytes(50));
-            InitializeOpenGLRenderer(&TransientStorage);
+            GameMemory GameMemory = {};
+            GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
+            GameMemory.TransientStorage = MakeBumpAllocator(Gigabytes(1));
+            
+            GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
+            Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
+            
+            InitializeOpenGLRenderer(&GameMemory);
 
             MSG Message;
             WindowData.GlobalRunning = true;
             WindowData.WindowDC = GetDC(WindowHandle);
+            
+            char *SourceDLLName = "GameCode.dll";
+            Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
             while(WindowData.GlobalRunning) 
             {
+                FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
+                if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
+                {
+                    Win32UnloadGamecode(&Game);
+                    Game = Win32LoadGamecode(SourceDLLName);
+                }
                 while(PeekMessageA(&Message, WindowHandle, 0, 0, PM_REMOVE)) 
                 {
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
                 }
-                GameUpdate(WindowData, &TransientStorage);
+                Game.UpdateAndRender(&GameMemory, GameRenderData);
                 OpenGLRender(WindowData);
+                GameMemory.TransientStorage.Used = 0;
             }
         }
         else 

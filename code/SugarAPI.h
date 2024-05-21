@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Sugar.h"
 #include "Sugar_Math.h"
 
@@ -20,7 +21,7 @@ struct RenderData
 };
 
 // TODO : Change this from global when hot reloading is a thing
-global_variable RenderData RenderData;
+static RenderData *GameRenderData;
 
 // API STUFF
 enum SpriteID 
@@ -34,7 +35,6 @@ struct Sprite
     ivec2 AtlasOffset;
     ivec2 SpriteSize;
 };
-
 
 inline Sprite GetSprite(SpriteID SpriteID) 
 {
@@ -59,5 +59,5 @@ inline void DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size)
     transform.AtlasOffset = Sprite.AtlasOffset;
     transform.SpriteSize = Sprite.SpriteSize;
 
-    RenderData.Transforms[RenderData.TransformCount++] = transform;
+    GameRenderData->Transforms[GameRenderData->TransformCount++] = transform;
 }

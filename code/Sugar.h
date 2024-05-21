@@ -7,6 +7,8 @@
 #define WIN32_LEAN_AND_MEAN
 #define EXTRA_LEAN
 #include <windows.h>
+#include "Win32_Sugar.h"
+#include "SugarAPI.h"
 
 #else
 
@@ -39,23 +41,26 @@ typedef int64_t int64;
 typedef float real32;
 typedef double real64;
 
-struct GameMemory 
-{
-    uint64 PermanentStorageSize;
-    void *PermanentStorage;
-
-    uint64 TransientStorageSize;
-    void *TransientStorage;
-
-    bool IsInitialized;
-};
-
 struct BumpAllocator 
 {
     size_t Capacity;
     size_t Used;
     char* Memory;
 };
+
+struct GameMemory 
+{
+    BumpAllocator TransientStorage;
+    BumpAllocator PermanentStorage;
+
+    bool IsInitialized;
+};
+
+#define GAME_UPDATE_AND_RENDER(name) void name(GameMemory *GameMemory, RenderData *GameRenderDataIn)
+typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
+GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub) 
+{
+}
 
 inline BumpAllocator 
 MakeBumpAllocator(size_t Size) 
@@ -84,16 +89,6 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
     }
     Assert(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity, "BumpAllocation failed!\n");
     return(Result);
-}
-
-inline int64 
-GetFileTimeStamp(const char *Filepath) 
-{
-    Assert(Filepath != 0, "File not found!\n");
-
-    struct stat Filestat = {};
-    stat(Filepath, &Filestat);
-    return(Filestat.st_mtime);
 }
 
 inline int32

@@ -29,9 +29,9 @@ internal void OpenGLRender(Win32_WindowData WindowData)
     glUniform2fv(glContext.ScreenSizeID, 1, &ScreenSize.x);
 
     glBufferSubData
-        (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * RenderData.TransformCount, RenderData.Transforms);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, RenderData.TransformCount);
-    RenderData.TransformCount = 0;
+        (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * GameRenderData->TransformCount, GameRenderData->Transforms);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, GameRenderData->TransformCount);
+    GameRenderData->TransformCount = 0;
     SwapBuffers(WindowData.WindowDC);
 }
 
@@ -52,7 +52,7 @@ OpenGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 }
 
 internal void
-InitializeOpenGLRenderer(BumpAllocator *TransientStorage)
+InitializeOpenGLRenderer(GameMemory *GameMemory)
 {
     LoadGLFunctions();
     glDebugMessageCallback(&OpenGLDebugCallback, nullptr);
@@ -63,8 +63,8 @@ InitializeOpenGLRenderer(BumpAllocator *TransientStorage)
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
     int FileSize = 0;
-    char *VertexShader = ReadEntireFileBA("../code/shader/BasicVertexShader.glsl", &FileSize, TransientStorage);
-    char *FragmentShader = ReadEntireFileBA("../code/shader/BasicFragmentShader.glsl", &FileSize, TransientStorage);
+    char *VertexShader = ReadEntireFileBA("../code/shader/BasicVertexShader.glsl", &FileSize, &GameMemory->TransientStorage);
+    char *FragmentShader = ReadEntireFileBA("../code/shader/BasicFragmentShader.glsl", &FileSize, &GameMemory->TransientStorage);
     Assert(VertexShader, "Failed to load the Vertex Shader!\n");
     Assert(FragmentShader, "Failed to load the Fragment Shader!\n");
 
@@ -153,7 +153,7 @@ InitializeOpenGLRenderer(BumpAllocator *TransientStorage)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.TransformSBOID);
 
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Transform) * MAX_TRANSFORMS, 
-            RenderData.Transforms, GL_DYNAMIC_DRAW);
+            GameRenderData->Transforms, GL_DYNAMIC_DRAW);
     glContext.ScreenSizeID = glGetUniformLocation(glContext.ProgramID, "ScreenSize");
 
     glEnable(GL_FRAMEBUFFER_SRGB);

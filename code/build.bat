@@ -1,10 +1,12 @@
 @echo off
 
-Set CommonCompilerFlags=-MD -GR- -EHa- -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100
-Set CommonLinkerFlags=kernel32.lib user32.lib gdi32.lib opengl32.lib
+Set CommonCompilerFlags=-MT -GR- -EHa- -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100
+Set CommonLinkerFlags=-incremental:no kernel32.lib user32.lib gdi32.lib opengl32.lib
 IF NOT EXIST ..\build mkdir ..\build
 pushd ..\build
-cl -DSUGAR_SLOW=1 ../code/win32_Sugar.cpp -I%STBImageInclude% %CommonCompilerFlags% /link /MACHINE:X64 /OUT:"Sugar.exe" %CommonLinkerFlags%
+cl -DSUGAR_SLOW=1 ../code/win32_Sugar.cpp %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"Sugar.exe" 
+del *.pdb
+cl -DSUGAR_SLOW=1 ../code/Sugar.cpp %CommonCompilerFlags% -LD -link /PDB:Sugar_%RANDOM%%Random%.pdb -EXPORT:GameUpdateAndRender -OUT:"GameCode.dll" 
 popd
 
 @echo ====================

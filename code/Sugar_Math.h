@@ -2,8 +2,8 @@
 
 struct vec2 
 {
-    real32 x;
-    real32 y;
+    float x;
+    float y;
 };
 
 struct ivec2 
