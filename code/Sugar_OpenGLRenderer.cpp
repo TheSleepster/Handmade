@@ -18,7 +18,8 @@ struct glContext
 
 global_variable glContext glContext = {};
 
-internal void OpenGLRender(Win32_WindowData WindowData) 
+internal void
+OpenGLRender(Win32_WindowData WindowData) 
 {
     glClearColor(1.0f, 0.4f, 1.0f, 1.0f);
     glClearDepth(0.0f);
