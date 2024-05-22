@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Sugar.h"
-#include "Sugar_Math.h"
+#include "util/Sugar_Math.h"
+#include "Sugar_Intrinsics.h"
 
 // RENDER DATA
 #define MAX_TRANSFORMS 1000

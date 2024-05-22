@@ -1,3 +1,25 @@
+
+
+/*
+    This is not a final layer. Additional Requirements: 
+
+    - GameInput
+    - Audio
+    - DeltaTime
+    - Asset Loading
+    - Fullscreen
+    - Multithreading
+    - File Saving
+    - Game Saving
+    - Sleep/Inactivity Period
+    - GetKeyboardLayout (For non-standard QWERTY keyboards)
+    - Raw Input (For multiple inputs)
+    - WM_ACTIVATEAPP (For being the inactive window)
+    - ClipCursor(Multi Monitor)
+*/
+
+
+
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"

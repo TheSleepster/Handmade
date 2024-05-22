@@ -1,4 +1,5 @@
 #pragma once
+#include "Sugar_Intrinsics.h"
 
 struct vec2 
 {

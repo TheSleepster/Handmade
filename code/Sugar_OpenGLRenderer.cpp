@@ -1,5 +1,5 @@
 #include "Sugar.h"
-#include "Sugar_Math.h"
+#include "util/Sugar_Math.h"
 #include "SugarAPI.h"
 
 #define STB_IMAGE_IMPLEMENTATION

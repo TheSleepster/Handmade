@@ -6,7 +6,7 @@ IF NOT EXIST ..\build mkdir ..\build
 pushd ..\build
 cl -DSUGAR_SLOW=1 ../code/win32_Sugar.cpp %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"Sugar.exe" 
 del *.pdb
-cl -DSUGAR_SLOW=1 ../code/Sugar.cpp %CommonCompilerFlags% -LD -link /PDB:Sugar_%RANDOM%%Random%.pdb -EXPORT:GameUpdateAndRender -OUT:"GameCode.dll" 
+cl -DSUGAR_SLOW=1 ../code/Sugar.cpp %CommonCompilerFlags% -LD -link -incremental:no /PDB:Sugar_%RANDOM%%RANDOM%.pdb -EXPORT:GameUpdateAndRender -OUT:"GameCode.dll" 
 popd
 
 @echo ====================
