@@ -9,7 +9,6 @@
 extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
     GameRenderData = GameRenderDataIn;
-
     for(int i = 0; i < 10; ++i) 
     {
         for(int j = 0; j < 10; ++j) 

@@ -21,7 +21,7 @@ global_variable glContext glContext = {};
 internal void
 OpenGLRender(Win32_WindowData WindowData) 
 {
-    glClearColor(1.0f, 0.4f, 1.0f, 1.0f);
+    glClearColor(1.0f, 0.2f, 1.0f, 1.0f);
     glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, WindowData.WindowWidth, WindowData.WindowHeight);
