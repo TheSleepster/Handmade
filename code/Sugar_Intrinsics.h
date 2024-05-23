@@ -6,6 +6,7 @@
 #define Trace(Message) {OutputDebugStringA(Message);}
 #define WIN32_LEAN_AND_MEAN
 #define EXTRA_LEAN
+#define NOMINMAX
 #include <windows.h>
 #include "Win32_Sugar.h"
 #include "SugarAPI.h"

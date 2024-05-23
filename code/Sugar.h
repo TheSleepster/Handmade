@@ -1,6 +1,7 @@
 #pragma once
 #include "Sugar_Intrinsics.h"
 #include "util/Sugar_Memory.h"
+#include "SugarAPI.h"
 
 struct GameMemory 
 {

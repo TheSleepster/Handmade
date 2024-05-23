@@ -20,17 +20,17 @@
 
 
 
+#include "Sugar_Intrinsics.h"
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define EXTRA_LEAN
+#define NOMINMAX
 #include <windows.h>
 #include <wingdi.h>
 #include "../data/deps/OpenGL/GLL.h"
-
-#include "Sugar_OpenGLRenderer.cpp"
 
 struct Win32GameCode 
 {
@@ -45,6 +45,8 @@ struct Win32GameCode
 global_variable Win32_WindowData WindowData;
 global_variable PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr; 
 global_variable PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr; 
+
+#include "Sugar_OpenGLRenderer.cpp"
 
 internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
@@ -276,7 +278,7 @@ WinMain(HINSTANCE hInstance,
                     DispatchMessage(&Message);
                 }
                 Game.UpdateAndRender(&GameMemory, GameRenderData);
-                OpenGLRender(WindowData);
+                OpenGLRender(&GameMemory);
                 GameMemory.TransientStorage.Used = 0;
             }
         }

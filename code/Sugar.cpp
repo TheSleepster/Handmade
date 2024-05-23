@@ -1,3 +1,4 @@
+#include "Sugar_Intrinsics.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "win32_Sugar.h"

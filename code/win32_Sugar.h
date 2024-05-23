@@ -1,9 +1,9 @@
 #pragma once 
 
+#include "Sugar_Intrinsics.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "util/Sugar_Memory.h"
-#include "Sugar_Intrinsics.h"
 #include <stdio.h>
 #include <stdint.h>
 
@@ -28,7 +28,7 @@ struct Win32_WindowClient
 };
 
 inline FILETIME
-Win32GetLastWriteTime(char *Filename) 
+Win32GetLastWriteTime(const char *Filename) 
 {
     FILETIME LastWriteTime = {};
 
@@ -43,12 +43,21 @@ Win32GetLastWriteTime(char *Filename)
     return(LastWriteTime);
 }
 
+inline FILETIME
+maxFiletime(FILETIME a, FILETIME b) 
+{
+    if(CompareFileTime(&a, &b) != 0) 
+    {
+        return(a);
+    }
+    return(b);
+}
+
 inline int32
 GetFileSizeInBytes(const char *Filepath) 
 {
     int32 FileSize = 0;
     FILE *File = fopen(Filepath, "rb");
-    Assert(File != nullptr, "File not found\n");
     
     fseek(File, 0, SEEK_END);
     FileSize = ftell(File);
