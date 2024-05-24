@@ -12,7 +12,7 @@
     - File Saving
     - Game Saving
     - Sleep/Inactivity Period
-    - GetKeyboardLayout (For non-standard QWERTY keyboards)
+    - GetKeyboardLayout() (For non-standard QWERTY keyboards)
     - Raw Input (For multiple inputs)
     - WM_ACTIVATEAPP (For being the inactive window)
     - ClipCursor(Multi Monitor)
@@ -32,20 +32,7 @@
 #include <wingdi.h>
 #include "../data/deps/OpenGL/GLL.h"
 
-struct Win32GameCode 
-{
-    HMODULE GameCodeDLL;
-    FILETIME DLLLastWriteTime;
-
-    game_update_and_render *UpdateAndRender;
-
-    bool IsValid;
-};
-
 global_variable Win32_WindowData WindowData;
-global_variable PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr; 
-global_variable PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr; 
-
 #include "Sugar_OpenGLRenderer.cpp"
 
 internal Win32GameCode
@@ -85,7 +72,7 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
 }
 
 internal void
-Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window) 
+Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions *Win32OpenGL) 
 {
     HWND WindowHandle = 
         CreateWindow(Window.lpszClassName,
@@ -118,12 +105,19 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window)
     HGLRC TempRC = wglCreateContext(WindowDC);
     wglMakeCurrent(WindowDC, TempRC);
 
-    wglChoosePixelFormatARB = 
-    (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-    wglCreateContextAttribsARB = 
-    (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+// NOTE : Loading wgl specific OpenGL functions
+    Win32OpenGL->wglChoosePixelFormatARB = 
+        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    Win32OpenGL->wglCreateContextAttribsARB = 
+        (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+    Win32OpenGL->wglSwapIntervalEXT =
+        (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 
-    if(!wglCreateContextAttribsARB||!wglChoosePixelFormatARB) 
+    if(!Win32OpenGL->wglCreateContextAttribsARB||
+       !Win32OpenGL->wglChoosePixelFormatARB||
+       !Win32OpenGL->wglSwapIntervalEXT) 
+
+    if(!Win32OpenGL->wglCreateContextAttribsARB||!Win32OpenGL->wglChoosePixelFormatARB) 
     {
         Assert(false, "Failed to manually load WGL functions!\n");
     }
@@ -152,7 +146,7 @@ Win32MainWindowCallback(HWND    hWnd,
         case WM_SIZE: 
         {
             RECT Rect = {};
-            GetWindowRect(hWnd, &Rect);
+            GetClientRect(hWnd, &Rect);
             WindowData.WindowWidth = Rect.right - Rect.left;
             WindowData.WindowHeight = Rect.bottom - Rect.top;
         }break;
@@ -170,7 +164,12 @@ WinMain(HINSTANCE hInstance,
         LPSTR     lpCmdLine,
         int       nShowCmd) 
 {
+    LARGE_INTEGER PerfCountFrequencyResult;
+    QueryPerformanceFrequency(&PerfCountFrequencyResult);
+    int64 PerfCountFrequency = PerfCountFrequencyResult.QuadPart;
+
     WNDCLASS Window = {};
+    Win32OpenGLFunctions Win32OpenGL = {};
 
     Window.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     Window.lpfnWndProc = Win32MainWindowCallback;
@@ -185,7 +184,7 @@ WinMain(HINSTANCE hInstance,
         WindowData.WindowHeight = 720;
 
         // NOTE : This Initializes OpenGL so we can make the next context
-        Win32InitializeOpenGL(hInstance, Window);
+        Win32InitializeOpenGL(hInstance, Window, &Win32OpenGL);
         // NOTE : Then we create the real OpenGL Context
         HWND WindowHandle = 
             CreateWindow(Window.lpszClassName,
@@ -215,7 +214,7 @@ WinMain(HINSTANCE hInstance,
         };
         UINT NumPixelFormats;
         int PixelFormat = 0;
-        if(!wglChoosePixelFormatARB(WindowDC, PixelAttributes, 0, 1, &PixelFormat, &NumPixelFormats)) 
+        if(!Win32OpenGL.wglChoosePixelFormatARB(WindowDC, PixelAttributes, 0, 1, &PixelFormat, &NumPixelFormats)) 
         {
             Assert(false, "Failed to choose the pixel format the second time\n");
         }
@@ -235,8 +234,7 @@ WinMain(HINSTANCE hInstance,
             0
         };
 
-        HGLRC RenderingContext = wglCreateContextAttribsARB(WindowDC, 0, ContextAttributes);
-
+        HGLRC RenderingContext = Win32OpenGL.wglCreateContextAttribsARB(WindowDC, 0, ContextAttributes);
         if(!RenderingContext) 
         {
             Assert(false, "Failed to create the RenderingContext\n");
@@ -246,6 +244,10 @@ WinMain(HINSTANCE hInstance,
         {
             Assert(false, "Failed to make current wglMakeCurrent(WindowDc, RenderingContext)\n");
         }
+
+        // NOTE : VSYNC
+        Win32OpenGL.wglSwapIntervalEXT(1);
+        // NOTE : VSYNC
 
         if(WindowHandle) 
         {
@@ -258,12 +260,22 @@ WinMain(HINSTANCE hInstance,
             
             InitializeOpenGLRenderer(&GameMemory);
 
-            MSG Message;
-            WindowData.GlobalRunning = true;
-            WindowData.WindowDC = GetDC(WindowHandle);
-            
+
             char *SourceDLLName = "GameCode.dll";
             Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
+
+            MSG Message;
+            WindowData.WindowDC = GetDC(WindowHandle);
+            WindowData.GlobalRunning = true;
+
+            LARGE_INTEGER LastCounter;            
+            QueryPerformanceCounter(&LastCounter);
+
+            // TODO : Two functions are needed. Update(), and FixedUpdate(). 
+            //        Update will operate under the Display Framerate, 
+            //        whilst FixedUpdate has a fixed Update Time
+            //        Update will be for things that are a part of the same update frequency as the renderer.
+            //        FixedUpdate will be mainly for Physics.
             while(WindowData.GlobalRunning) 
             {
                 FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
@@ -280,6 +292,17 @@ WinMain(HINSTANCE hInstance,
                 Game.UpdateAndRender(&GameMemory, GameRenderData);
                 OpenGLRender(&GameMemory);
                 GameMemory.TransientStorage.Used = 0;
+
+                LARGE_INTEGER EndCounter;
+                QueryPerformanceCounter(&EndCounter);
+                int64 DeltaCounter = EndCounter.QuadPart - LastCounter.QuadPart;    
+                real32 MSPerFrame = (1000 * (real32)DeltaCounter) / (real32)PerfCountFrequency;
+                int32 FPS = (int32)PerfCountFrequency / (int32)DeltaCounter;
+
+                char Buffer[256];
+                sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
+                OutputDebugStringA(Buffer);
+                LastCounter = EndCounter;
             }
         }
         else 

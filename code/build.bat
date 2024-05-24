@@ -5,7 +5,7 @@ Set CommonLinkerFlags=-incremental:no kernel32.lib user32.lib gdi32.lib opengl32
 IF NOT EXIST ..\build mkdir ..\build
 pushd ..\build
 del *.pdb
-cl -DSUGAR_SLOW=1 ../code/win32_Sugar.cpp %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"Sugar.exe" 
+cl -DSUGAR_SLOW=1 ../code/win32_Sugar.cpp %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"Handmade.exe" 
 cl -DSUGAR_SLOW=1 ../code/Sugar.cpp %CommonCompilerFlags% -LD -link -incremental:no /PDB:Sugar_%RANDOM%%RANDOM%.pdb -EXPORT:GameUpdateAndRender -OUT:"GameCode.dll" 
 popd
 

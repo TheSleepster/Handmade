@@ -7,16 +7,6 @@
 #include "../data/deps/stbimage/stb_image.h"
 #include "../data/deps/OpenGL/GLL.h"
 
-const char *TEXTURE_ATLAS_PATH = "../data/res/textures/TextureAtlas.png";
-
-enum ShaderType 
-{
-    VERTEX_SHADER,
-    FRAGMENT_SHADER,
-
-    SHADER_COUNT
-};
-
 struct glContext 
 {
     GLuint ProgramID; 
@@ -30,8 +20,6 @@ struct glContext
 
     FILETIME TextureTimestamp;
     FILETIME ShaderTimestamp;
-    
-    ShaderType ShaderType;
 };
 
 global_variable glContext glContext = {};
@@ -80,28 +68,6 @@ LoadShader(int ShaderType, const char *Filepath, GameMemory *GameMemory)
     return(ShaderID);
 }
 
-internal void 
-ReloadShaders(GameMemory *GameMemory) 
-{
-    GLuint VertexShaderID = 
-        LoadShader(GL_VERTEX_SHADER, glContext.VertexShaderFilepath, GameMemory);
-    GLuint FragmentShaderID = 
-        LoadShader(GL_FRAGMENT_SHADER, glContext.FragmentShaderFilepath, GameMemory);
-
-    glAttachShader(glContext.ProgramID, VertexShaderID);
-    glAttachShader(glContext.ProgramID, FragmentShaderID);
-    glLinkProgram(glContext.ProgramID);
-
-    glDetachShader(glContext.ProgramID, VertexShaderID);
-    glDetachShader(glContext.ProgramID, FragmentShaderID);
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
-
-    FILETIME TimeStampVertex = Win32GetLastWriteTime(glContext.VertexShaderFilepath); 
-    FILETIME TimeStampFragment = Win32GetLastWriteTime(glContext.FragmentShaderFilepath); 
-    glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
-}
-
 internal void
 OpenGLRender(GameMemory *GameMemory) 
 {
@@ -116,7 +82,23 @@ OpenGLRender(GameMemory *GameMemory)
     if(CompareFileTime(&TimeStampVertex, &glContext.ShaderTimestamp) != 0||
        CompareFileTime(&TimeStampFragment, &glContext.ShaderTimestamp) != 0) 
     { 
-        ReloadShaders(GameMemory);
+        GLuint VertexShaderID = 
+            LoadShader(GL_VERTEX_SHADER, glContext.VertexShaderFilepath, GameMemory);
+        GLuint FragmentShaderID = 
+            LoadShader(GL_FRAGMENT_SHADER, glContext.FragmentShaderFilepath, GameMemory);
+
+        glAttachShader(glContext.ProgramID, VertexShaderID);
+        glAttachShader(glContext.ProgramID, FragmentShaderID);
+        glLinkProgram(glContext.ProgramID);
+
+        glDetachShader(glContext.ProgramID, VertexShaderID);
+        glDetachShader(glContext.ProgramID, FragmentShaderID);
+        glDeleteShader(VertexShaderID);
+        glDeleteShader(FragmentShaderID);
+
+        TimeStampVertex = Win32GetLastWriteTime(glContext.VertexShaderFilepath); 
+        TimeStampFragment = Win32GetLastWriteTime(glContext.FragmentShaderFilepath); 
+        glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
     }
 
     glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
@@ -203,8 +185,9 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
+    // NOTE : Testing Texture Rendering
     int Width, Height, Channels;
-    char *Data = (char *)stbi_load(TEXTURE_ATLAS_PATH, &Width, &Height, &Channels, 4); 
+    char *Data = (char *)stbi_load(glContext.TextureDataFilepath, &Width, &Height, &Channels, 4); 
     Assert(Data, "Failed to get the TextureAtlas' data!\n");
 
     // NOTE : This is similar to creating a WGL context.

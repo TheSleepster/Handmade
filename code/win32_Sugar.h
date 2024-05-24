@@ -3,6 +3,7 @@
 #include "Sugar_Intrinsics.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
+#include "../data/deps/OpenGL/GLL.h"
 #include "util/Sugar_Memory.h"
 #include <stdio.h>
 #include <stdint.h>
@@ -19,6 +20,23 @@ struct Win32_WindowData
     HDC WindowDC;
 
     bool GlobalRunning;
+};
+
+struct Win32GameCode 
+{
+    HMODULE GameCodeDLL;
+    FILETIME DLLLastWriteTime;
+
+    game_update_and_render *UpdateAndRender;
+
+    bool IsValid;
+};
+
+struct Win32OpenGLFunctions 
+{
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB; 
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB; 
+    PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 };
 
 struct Win32_WindowClient 
