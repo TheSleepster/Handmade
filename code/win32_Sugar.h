@@ -1,12 +1,12 @@
 #pragma once 
 
+#include <stdio.h>
+#include <stdint.h>
 #include "Sugar_Intrinsics.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "../data/deps/OpenGL/GLL.h"
 #include "util/Sugar_Memory.h"
-#include <stdio.h>
-#include <stdint.h>
 
 typedef int32_t int32;
 typedef int64_t int64;
@@ -30,6 +30,7 @@ struct Win32GameCode
     game_update_and_render *UpdateAndRender;
 
     bool IsValid;
+    bool IsLoaded;
 };
 
 struct Win32OpenGLFunctions 

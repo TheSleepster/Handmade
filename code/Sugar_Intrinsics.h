@@ -4,12 +4,6 @@
 
 #define Assert(Expression, Message) if(!(Expression)) {OutputDebugStringA(Message); DebugBreak();}
 #define Trace(Message) {OutputDebugStringA(Message);}
-#define WIN32_LEAN_AND_MEAN
-#define EXTRA_LEAN
-#define NOMINMAX
-#include <windows.h>
-#include "Win32_Sugar.h"
-#include "SugarAPI.h"
 
 #else
 
@@ -42,3 +36,8 @@ typedef int64_t int64;
 typedef float real32;
 typedef double real64;
 
+#define WIN32_LEAN_AND_MEAN
+#define EXTRA_LEAN
+#define NOMINMAX
+#include "Win32_Sugar.h"
+#include "SugarAPI.h"

@@ -2,6 +2,7 @@
 #include "Sugar.h"
 #include "Win32_Sugar.h"
 #include "Sugar_Intrinsics.h"
+#include <windows.h>
 
 struct BumpAllocator 
 {

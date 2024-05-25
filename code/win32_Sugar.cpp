@@ -24,16 +24,19 @@
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
+#include "Sugar_Input.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define EXTRA_LEAN
 #define NOMINMAX
 #include <windows.h>
 #include <wingdi.h>
+#include <xinput.h>
 #include "../data/deps/OpenGL/GLL.h"
 
 global_variable Win32_WindowData WindowData;
 #include "Sugar_OpenGLRenderer.cpp"
+#include "Sugar_Input.cpp"
 
 internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
@@ -43,7 +46,12 @@ Win32LoadGamecode(char *SourceDLLName)
     char *TempDLLName = "GamecodeTemp.dll";
     Result.DLLLastWriteTime = Win32GetLastWriteTime(SourceDLLName);
 
-    CopyFile(SourceDLLName, TempDLLName, FALSE);
+    Result.IsLoaded = false;
+    while(!Result.IsLoaded) 
+    {
+        CopyFile(SourceDLLName, TempDLLName, FALSE);
+        Result.IsLoaded = true;
+    }
     Result.GameCodeDLL = LoadLibraryA(TempDLLName);
 
     if(Result.GameCodeDLL) 
@@ -70,6 +78,64 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
     Gamecode->IsValid = false;
     Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
 }
+
+LRESULT CALLBACK
+Win32MainWindowCallback(HWND    hWnd,
+                        UINT    Message,
+                        WPARAM  wParam,
+                        LPARAM  lParam) 
+{
+    LRESULT Result = 0;
+    switch(Message) 
+    {
+        case WM_DESTROY: 
+        {
+            WindowData.GlobalRunning = false;
+        }break;
+        case WM_SIZE: 
+        {
+            RECT Rect = {};
+            GetClientRect(hWnd, &Rect);
+            WindowData.WindowWidth = Rect.right - Rect.left;
+            WindowData.WindowHeight = Rect.bottom - Rect.top;
+        }break;
+
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN: 
+        case WM_KEYUP:
+        {
+            switch(wParam) 
+            {
+                case VK_ESCAPE: 
+                {
+                    WindowData.GlobalRunning = false;
+                }break;
+
+            }
+        }break;
+
+        case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_XBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONUP: 
+        case WM_XBUTTONUP:
+        {
+            WindowData.GlobalRunning = false;
+        }break;
+        
+
+        default: 
+        { 
+            Result = DefWindowProc(hWnd, Message, wParam, lParam);
+        }break;
+    }
+    return(Result);
+}
+
 
 internal void
 Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions *Win32OpenGL) 
@@ -124,38 +190,6 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
     wglMakeCurrent(WindowDC, 0);
     wglDeleteContext(TempRC);
     DestroyWindow(WindowHandle);
-}
-
-LRESULT CALLBACK
-Win32MainWindowCallback(HWND    hWnd,
-                        UINT    Message,
-                        WPARAM  wParam,
-                        LPARAM  lParam) 
-{
-    LRESULT Result = 0;
-    switch(Message) 
-    {
-        case WM_CLOSE: 
-        {
-            WindowData.GlobalRunning = false;
-        }break;
-        case WM_DESTROY: 
-        {
-            WindowData.GlobalRunning = false;
-        }break;
-        case WM_SIZE: 
-        {
-            RECT Rect = {};
-            GetClientRect(hWnd, &Rect);
-            WindowData.WindowWidth = Rect.right - Rect.left;
-            WindowData.WindowHeight = Rect.bottom - Rect.top;
-        }break;
-        default: 
-        { 
-            Result = DefWindowProc(hWnd, Message, wParam, lParam);
-        }break;
-    }
-    return(Result);
 }
 
 int APIENTRY
@@ -258,7 +292,12 @@ WinMain(HINSTANCE hInstance,
             GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
             Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
             
+            GameInput = (Input*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(Input));
+            Assert(GameInput, "Failed to allocate PermanentMemory for the Input Variable!\n");
+            
+
             InitializeOpenGLRenderer(&GameMemory);
+            Win32LoadKeyData();
 
 
             char *SourceDLLName = "GameCode.dll";
@@ -270,7 +309,6 @@ WinMain(HINSTANCE hInstance,
 
             LARGE_INTEGER LastCounter;            
             QueryPerformanceCounter(&LastCounter);
-
             // TODO : Two functions are needed. Update(), and FixedUpdate(). 
             //        Update will operate under the Display Framerate, 
             //        whilst FixedUpdate has a fixed Update Time
@@ -284,12 +322,14 @@ WinMain(HINSTANCE hInstance,
                     Win32UnloadGamecode(&Game);
                     Game = Win32LoadGamecode(SourceDLLName);
                 }
+
                 while(PeekMessageA(&Message, WindowHandle, 0, 0, PM_REMOVE)) 
                 {
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
                 }
-                Game.UpdateAndRender(&GameMemory, GameRenderData);
+
+                Game.UpdateAndRender(&GameMemory, GameRenderData, GameInput);
                 OpenGLRender(&GameMemory);
                 GameMemory.TransientStorage.Used = 0;
 
