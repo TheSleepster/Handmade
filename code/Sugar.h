@@ -12,7 +12,7 @@ struct GameMemory
     bool IsInitialized;
 };
 
-#define GAME_UPDATE_AND_RENDER(name) void name(GameMemory *GameMemory, RenderData *GameRenderDataIn, Input *GameInputIn)
+#define GAME_UPDATE_AND_RENDER(name) void name(GameMemory *GameMemory, RenderData *GameRenderDataIn, Input *GameInput)
 typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
 GAME_UPDATE_AND_RENDER(GameUpdateAndRenderStub) 
 {

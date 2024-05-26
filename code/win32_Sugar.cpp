@@ -34,9 +34,12 @@
 #include <xinput.h>
 #include "../data/deps/OpenGL/GLL.h"
 
-global_variable Win32_WindowData WindowData;
 #include "Sugar_OpenGLRenderer.cpp"
 #include "Sugar_Input.cpp"
+
+global_variable bool GlobalRunning = {};
+global_variable int ClientWidth = {};
+global_variable int ClientHeight = {}; 
 
 internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
@@ -88,46 +91,23 @@ Win32MainWindowCallback(HWND    hWnd,
     LRESULT Result = 0;
     switch(Message) 
     {
+        case WM_CLOSE: 
+        {
+            GlobalRunning = false;
+            DestroyWindow(hWnd);
+        }break;
         case WM_DESTROY: 
         {
-            WindowData.GlobalRunning = false;
+            GlobalRunning = false;
+            DestroyWindow(hWnd);
         }break;
         case WM_SIZE: 
         {
             RECT Rect = {};
             GetClientRect(hWnd, &Rect);
-            WindowData.WindowWidth = Rect.right - Rect.left;
-            WindowData.WindowHeight = Rect.bottom - Rect.top;
+            ClientWidth = Rect.right - Rect.left;
+            ClientHeight = Rect.bottom - Rect.top;
         }break;
-
-        case WM_SYSKEYDOWN:
-        case WM_SYSKEYUP:
-        case WM_KEYDOWN: 
-        case WM_KEYUP:
-        {
-            switch(wParam) 
-            {
-                case VK_ESCAPE: 
-                {
-                    WindowData.GlobalRunning = false;
-                }break;
-
-            }
-        }break;
-
-        case WM_LBUTTONDOWN:
-        case WM_RBUTTONDOWN:
-        case WM_MBUTTONDOWN:
-        case WM_XBUTTONDOWN:
-        case WM_LBUTTONUP:
-        case WM_RBUTTONUP:
-        case WM_MBUTTONUP: 
-        case WM_XBUTTONUP:
-        {
-            WindowData.GlobalRunning = false;
-        }break;
-        
-
         default: 
         { 
             Result = DefWindowProc(hWnd, Message, wParam, lParam);
@@ -135,7 +115,6 @@ Win32MainWindowCallback(HWND    hWnd,
     }
     return(Result);
 }
-
 
 internal void
 Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions *Win32OpenGL) 
@@ -192,6 +171,67 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
     DestroyWindow(WindowHandle);
 }
 
+internal void 
+Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput) 
+{
+    while(PeekMessageA(&Message, WindowHandle, 0, 0, PM_REMOVE)) 
+    {
+        if(Message.message == WM_QUIT) 
+        {
+            GlobalRunning = false;
+        }
+
+        switch(Message.message) 
+        {
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN: 
+            case WM_KEYUP:
+            {
+                uint32 VKCode = (uint32)Message.wParam;
+                bool WasDown = ((Message.lParam & (1 << 30)) != 0);
+                bool IsDown = ((Message.lParam & (1 << 31)) == 0);
+                
+                KeyCodeID KeyCode = KeyCodeLookup[Message.wParam];
+                Key *Key = &GameInput->Keyboard.Keys[KeyCode];
+                Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
+                Key->JustReleased = !Key->JustReleased && Key->IsDown && !IsDown;
+                Key->IsDown = IsDown;
+
+
+                bool AltKeyIsDown = ((Message.lParam & (1 << 29)) !=0);
+                if(VKCode == VK_F4 && AltKeyIsDown) 
+                {
+                    GlobalRunning = false;
+                }
+            }break;
+            case WM_LBUTTONDOWN:
+            case WM_RBUTTONDOWN:
+            case WM_MBUTTONDOWN:
+            case WM_XBUTTONDOWN:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_MBUTTONUP: 
+            case WM_XBUTTONUP:
+            {
+                uint32 VKCode = (uint32)Message.wParam;
+                bool IsDown = (GetKeyState(VKCode) & (1 << 15));
+
+                KeyCodeID KeyCode = KeyCodeLookup[Message.wParam];
+                Key *Key = &GameInput->Keyboard.Keys[KeyCode];
+                Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
+                Key->JustReleased = !Key->JustReleased && Key->IsDown && !IsDown;
+                Key->IsDown = IsDown;
+            }break;
+            default: 
+            {
+                TranslateMessage(&Message);
+                DispatchMessage(&Message);
+            }break;
+        }
+    }
+}
+
 int APIENTRY
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -204,6 +244,7 @@ WinMain(HINSTANCE hInstance,
 
     WNDCLASS Window = {};
     Win32OpenGLFunctions Win32OpenGL = {};
+    Win32_WindowData WindowData = {};
 
     Window.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     Window.lpfnWndProc = Win32MainWindowCallback;
@@ -215,7 +256,7 @@ WinMain(HINSTANCE hInstance,
         WindowData.X = 100;
         WindowData.Y = 100;
         WindowData.WindowWidth = 1280;
-        WindowData.WindowHeight = 720;
+        WindowData.WindowHeight = 640;
 
         // NOTE : This Initializes OpenGL so we can make the next context
         Win32InitializeOpenGL(hInstance, Window, &Win32OpenGL);
@@ -292,20 +333,14 @@ WinMain(HINSTANCE hInstance,
             GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
             Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
             
-            GameInput = (Input*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(Input));
-            Assert(GameInput, "Failed to allocate PermanentMemory for the Input Variable!\n");
-            
-
             InitializeOpenGLRenderer(&GameMemory);
-            Win32LoadKeyData();
-
+            Win32LoadKeyData(); 
 
             char *SourceDLLName = "GameCode.dll";
             Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
 
-            MSG Message;
             WindowData.WindowDC = GetDC(WindowHandle);
-            WindowData.GlobalRunning = true;
+            GlobalRunning = true;
 
             LARGE_INTEGER LastCounter;            
             QueryPerformanceCounter(&LastCounter);
@@ -314,8 +349,24 @@ WinMain(HINSTANCE hInstance,
             //        whilst FixedUpdate has a fixed Update Time
             //        Update will be for things that are a part of the same update frequency as the renderer.
             //        FixedUpdate will be mainly for Physics.
-            while(WindowData.GlobalRunning) 
+            Input GameInput = {};
+
+            while(GlobalRunning) 
             {
+                MSG Message = {};
+                WindowData.WindowWidth = ClientWidth;
+                WindowData.WindowHeight = ClientHeight;
+
+                POINT MousePos;
+                
+                GameInput.Keyboard.LastMouse.x = GameInput.Keyboard.CurrentMouse.x;
+                GameInput.Keyboard.LastMouse.y = GameInput.Keyboard.CurrentMouse.y;
+
+                GetCursorPos(&MousePos);
+                ScreenToClient(WindowHandle, &MousePos);
+                GameInput.Keyboard.CurrentMouse.x = MousePos.x;
+                GameInput.Keyboard.CurrentMouse.y = MousePos.y;
+
                 FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
                 if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
                 {
@@ -323,14 +374,11 @@ WinMain(HINSTANCE hInstance,
                     Game = Win32LoadGamecode(SourceDLLName);
                 }
 
-                while(PeekMessageA(&Message, WindowHandle, 0, 0, PM_REMOVE)) 
-                {
-                    TranslateMessage(&Message);
-                    DispatchMessage(&Message);
-                }
+                Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
 
-                Game.UpdateAndRender(&GameMemory, GameRenderData, GameInput);
-                OpenGLRender(&GameMemory);
+                // TODO : This will eventually go inside of out "Update()" loop
+                Game.UpdateAndRender(&GameMemory, GameRenderData, &GameInput);
+                OpenGLRender(&GameMemory, &WindowData);
                 GameMemory.TransientStorage.Used = 0;
 
                 LARGE_INTEGER EndCounter;

@@ -74,17 +74,78 @@ enum KeyCodeID
     KEY_COUNT = 255,
 };
 
+struct ControllerButton 
+{
+    int HalfTransitionCount;
+    bool IsDown;
+};
+
+struct ControllerInput 
+{
+    // STICKS 
+
+    bool IsAnalog;
+    vec2 Start;
+    vec2 End;
+    vec2 Min;
+    vec2 Max;
+
+    // BUTTONS 
+    union 
+    {
+        ControllerButton Buttons[15];
+        struct 
+        {
+            ControllerButton Y;
+            ControllerButton A;
+            ControllerButton X;
+            ControllerButton B;
+            ControllerButton LeftShoulder;
+            ControllerButton RightShoulder;
+            ControllerButton LeftTrigger;
+            ControllerButton RightTrigger;
+            ControllerButton DPadUp;
+            ControllerButton DPadDown;
+            ControllerButton DPadLeft;
+            ControllerButton DPadRight;
+            ControllerButton StartButton;
+            ControllerButton Menu;
+            ControllerButton Home;
+        };
+    };
+};
+
 struct Key 
 {
-    bool IsDown;
+    bool JustPressed;
     bool JustReleased;
-    uint8 HalfTransition;
+    bool IsDown;
+};
+
+struct KeyboardInput 
+{
+    ivec2 LastMouse;
+    ivec2 CurrentMouse;
+    ivec2 RelMouse;
+
+    Key Keys[KEY_COUNT];
 };
 
 struct Input 
 {
-    KeyCodeID KeyCodes[KEY_COUNT];
-    Key Keys[KEY_COUNT];
+    ControllerInput Controller;
+    KeyboardInput Keyboard;
 };
 
-global_variable Input *GameInput;
+inline bool
+IsKeyDown(KeyCodeID KeyCode, Input *GameInput) 
+{
+    Key Key = GameInput->Keyboard.Keys[KeyCode];
+    if(Key.IsDown) 
+    {
+        return(true);
+    }
+    return(false);
+}
+
+global_variable KeyCodeID KeyCodeLookup[KEY_COUNT]; 

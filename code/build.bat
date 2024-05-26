@@ -1,6 +1,6 @@
 @echo off
 
-Set CommonCompilerFlags=-MT -GR- -EHa- -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100
+Set CommonCompilerFlags=-MT -GR- -EHa- -Od -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100 -wd4201
 Set CommonLinkerFlags=-incremental:no kernel32.lib user32.lib gdi32.lib opengl32.lib Xinput.lib
 IF NOT EXIST ..\build mkdir ..\build
 pushd ..\build

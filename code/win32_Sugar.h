@@ -18,8 +18,6 @@ struct Win32_WindowData
     int WindowWidth;
     int WindowHeight;
     HDC WindowDC;
-
-    bool GlobalRunning;
 };
 
 struct Win32GameCode 

@@ -69,7 +69,7 @@ LoadShader(int ShaderType, const char *Filepath, GameMemory *GameMemory)
 }
 
 internal void
-OpenGLRender(GameMemory *GameMemory) 
+OpenGLRender(GameMemory *GameMemory, Win32_WindowData *WindowData) 
 {
     FILETIME NewTextureWriteTime = Win32GetLastWriteTime(glContext.TextureDataFilepath);
     if(CompareFileTime(&NewTextureWriteTime, &glContext.TextureTimestamp) != 0) 
@@ -104,16 +104,16 @@ OpenGLRender(GameMemory *GameMemory)
     glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
     glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, WindowData.WindowWidth, WindowData.WindowHeight);
+    glViewport(0, 0, WindowData->WindowWidth, WindowData->WindowHeight);
 
-    vec2 ScreenSize = {(real32)WindowData.WindowWidth, (real32)WindowData.WindowHeight};
+    vec2 ScreenSize = {(real32)WindowData->WindowWidth, (real32)WindowData->WindowHeight};
     glUniform2fv(glContext.ScreenSizeID, 1, &ScreenSize.x);
 
     glBufferSubData
         (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * GameRenderData->TransformCount, GameRenderData->Transforms);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, GameRenderData->TransformCount);
     GameRenderData->TransformCount = 0;
-    SwapBuffers(WindowData.WindowDC);
+    SwapBuffers(WindowData->WindowDC);
 }
 
 internal void APIENTRY

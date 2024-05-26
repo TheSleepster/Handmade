@@ -2,6 +2,9 @@
 #include "Sugar.h"
 #include "Win32_Sugar.h"
 #include "Sugar_Intrinsics.h"
+#define WIN32_LEAN_AND_MEAN
+#define EXTRA_LEAN
+#define NOMINMAX
 #include <windows.h>
 
 struct BumpAllocator 
