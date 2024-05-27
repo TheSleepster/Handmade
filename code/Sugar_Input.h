@@ -2,6 +2,7 @@
 
 #include "Sugar_Intrinsics.h"
 #include "SugarAPI.h"
+#include <xinput.h>
 
 enum KeyCodeID 
 { 
@@ -76,7 +77,7 @@ enum KeyCodeID
 
 struct ControllerButton 
 {
-    int HalfTransitionCount;
+    uint8 HalfTransitionCount;
     bool IsDown;
 };
 
@@ -120,6 +121,24 @@ struct Key
     bool JustPressed;
     bool JustReleased;
     bool IsDown;
+    uint8 HalfTransitionCount;
+};
+
+enum KeyBindings 
+{
+    MOVE_UP,
+    MOVE_DOWN,
+    MOVE_LEFT,
+    MOVE_RIGHT,
+
+    ATTACK,
+
+    BINDING_COUNT,
+};
+
+struct Keymap 
+{
+    KeyCodeID Key;
 };
 
 struct KeyboardInput 
@@ -129,6 +148,7 @@ struct KeyboardInput
     ivec2 RelMouse;
 
     Key Keys[KEY_COUNT];
+    Keymap Bindings[BINDING_COUNT];
 };
 
 struct Input 
@@ -148,4 +168,31 @@ IsKeyDown(KeyCodeID KeyCode, Input *GameInput)
     return(false);
 }
 
+inline bool
+IsGameKeyDown(KeyBindings InputType, Input *GameInput) 
+{
+    KeyCodeID Keycode = GameInput->Keyboard.Bindings[InputType].Key;
+    Key Key = GameInput->Keyboard.Keys[Keycode];
+    if(Key.IsDown) 
+    {
+        return(true);
+    }
+    return(false);
+}
+
+
 global_variable KeyCodeID KeyCodeLookup[KEY_COUNT]; 
+
+#define XINPUT_SET_STATE(name) DWORD name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
+typedef XINPUT_SET_STATE(xinput_set_state);
+XINPUT_SET_STATE(XInputSetStateStub) 
+{
+    return(true);
+}
+
+#define XINPUT_GET_STATE(name) DWORD name(DWORD dwUserIndex, XINPUT_STATE *pState)
+typedef XINPUT_GET_STATE(xinput_get_state);
+XINPUT_GET_STATE(XInputGetStateStub) 
+{
+    return(true);
+}

@@ -44,6 +44,13 @@ struct Win32_WindowClient
     int Height;
 };
 
+struct XInputPointers 
+{
+    HMODULE XInputDLL;
+    xinput_get_state *GetState;
+    xinput_set_state *SetState;
+};
+
 inline FILETIME
 Win32GetLastWriteTime(const char *Filename) 
 {
@@ -117,3 +124,4 @@ ReadEntireFileBA(const char *Filepath, int *FileSize, BumpAllocator *BumpAllocat
 
     return(File);
 }
+

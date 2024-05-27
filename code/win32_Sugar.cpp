@@ -1,11 +1,16 @@
-
-
 /*
     This is not a final layer. Additional Requirements: 
 
-    - GameInput
-    - Audio
-    - DeltaTime
+    COMPLETE
+    - GameInput (Keyboard)
+    - Keymapping?
+    - DeltaTime (Kinda?)
+
+
+
+    TODO 
+    - Audio (DirectSound?, SokolAudio?, Or XAudio?)
+    - Audio Formats (.WAV exclusively?)
     - Asset Loading
     - Fullscreen
     - Multithreading
@@ -13,9 +18,11 @@
     - Game Saving
     - Sleep/Inactivity Period
     - GetKeyboardLayout() (For non-standard QWERTY keyboards)
+    - GameInput(XInput)
     - Raw Input (For multiple inputs)
     - WM_ACTIVATEAPP (For being the inactive window)
     - ClipCursor(Multi Monitor)
+    - Upload with WebAssembly
 */
 
 
@@ -36,6 +43,7 @@
 
 #include "Sugar_OpenGLRenderer.cpp"
 #include "Sugar_Input.cpp"
+#include "Sugar_Physics.cpp"
 
 global_variable bool GlobalRunning = {};
 global_variable int ClientWidth = {};
@@ -80,6 +88,28 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
     }
     Gamecode->IsValid = false;
     Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
+}
+
+internal XInputPointers 
+Win32LoadXInput(char *Filename) 
+{
+    XInputPointers Result = {};
+    Result.XInputDLL = LoadLibraryA(Filename);
+
+    if(Result.XInputDLL) 
+    {
+        Result.GetState = 
+            (xinput_get_state *)GetProcAddress(Result.XInputDLL, "XInputGetState");
+        Result.SetState = 
+            (xinput_set_state *)GetProcAddress(Result.XInputDLL, "XInputSetState");
+    }
+    else 
+    {
+        Result.GetState = XInputGetStateStub;
+        Result.SetState = XInputSetStateStub;
+    }
+
+    return(Result);
 }
 
 LRESULT CALLBACK
@@ -263,7 +293,7 @@ WinMain(HINSTANCE hInstance,
         // NOTE : Then we create the real OpenGL Context
         HWND WindowHandle = 
             CreateWindow(Window.lpszClassName,
-                    "Sugar",
+                    "Sugar Framework", 
                     WS_OVERLAPPEDWINDOW|WS_VISIBLE,
                     WindowData.X,
                     WindowData.Y,
@@ -350,6 +380,14 @@ WinMain(HINSTANCE hInstance,
             //        Update will be for things that are a part of the same update frequency as the renderer.
             //        FixedUpdate will be mainly for Physics.
             Input GameInput = {};
+            // KEYBOARD BINDINGS
+            GameInput.Keyboard.Bindings[MOVE_UP].Key = KEY_W;
+            GameInput.Keyboard.Bindings[MOVE_DOWN].Key = KEY_S;
+            GameInput.Keyboard.Bindings[MOVE_LEFT].Key = KEY_A;
+            GameInput.Keyboard.Bindings[MOVE_RIGHT].Key = KEY_D;
+            GameInput.Keyboard.Bindings[ATTACK].Key = KEY_MOUSE_LEFT;
+
+            XInputPointers XInput = Win32LoadXInput("XInput1_4.dll");
 
             while(GlobalRunning) 
             {
@@ -357,16 +395,60 @@ WinMain(HINSTANCE hInstance,
                 WindowData.WindowWidth = ClientWidth;
                 WindowData.WindowHeight = ClientHeight;
 
+                // MOUSE 
                 POINT MousePos;
-                
                 GameInput.Keyboard.LastMouse.x = GameInput.Keyboard.CurrentMouse.x;
                 GameInput.Keyboard.LastMouse.y = GameInput.Keyboard.CurrentMouse.y;
-
                 GetCursorPos(&MousePos);
                 ScreenToClient(WindowHandle, &MousePos);
                 GameInput.Keyboard.CurrentMouse.x = MousePos.x;
                 GameInput.Keyboard.CurrentMouse.y = MousePos.y;
+                GameInput.Keyboard.RelMouse = GameInput.Keyboard.CurrentMouse - GameInput.Keyboard.LastMouse;
 
+                for(DWORD ControllerIndex = 0; 
+                    ControllerIndex < 1; 
+                    ++ControllerIndex) 
+                {
+                    XINPUT_STATE ControllerState;
+                    if(XInput.GetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS) 
+                    {   
+                        XINPUT_GAMEPAD *Pad = &ControllerState.Gamepad;
+
+                        bool DPadUp = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+                        bool DPadDown = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+                        bool DPadLeft = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+                        bool DPadRight = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+                        bool StartButton = (Pad->wButtons & XINPUT_GAMEPAD_START);
+                        bool BackButton = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
+                        bool LeftThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_THUMB);
+                        bool RightThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_THUMB);
+                        bool LeftShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+                        bool RightShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+                        bool AButton = (Pad->wButtons & XINPUT_GAMEPAD_A);
+                        bool BButton = (Pad->wButtons & XINPUT_GAMEPAD_B);
+                        bool XButton = (Pad->wButtons & XINPUT_GAMEPAD_X);
+                        bool YButton = (Pad->wButtons & XINPUT_GAMEPAD_Y);
+
+                        uint8 LeftTrigger = Pad->bLeftTrigger;
+                        uint8 RightTrigger = Pad->bRightTrigger;
+
+                        int16 LeftStickX = Pad->sThumbLX;
+                        int16 LeftStickY = Pad->sThumbLY;
+                        int16 RightStickX = Pad->sThumbRX;
+                        int16 RightStickY = Pad->sThumbRY;
+
+                        XINPUT_VIBRATION Vibration = {};    
+                        Vibration.wLeftMotorSpeed = 6500;
+                        Vibration.wRightMotorSpeed = 6500;
+                        XInput.SetState(ControllerIndex, &Vibration);
+                    }
+                    else 
+                    {
+                        break; // NOTE : No controller avaliable
+                    }
+                }
+
+                // HOTRELOADING
                 FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
                 if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
                 {
@@ -374,6 +456,7 @@ WinMain(HINSTANCE hInstance,
                     Game = Win32LoadGamecode(SourceDLLName);
                 }
 
+                // MESSAGES
                 Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
 
                 // TODO : This will eventually go inside of out "Update()" loop
@@ -381,12 +464,14 @@ WinMain(HINSTANCE hInstance,
                 OpenGLRender(&GameMemory, &WindowData);
                 GameMemory.TransientStorage.Used = 0;
 
+                // DELTA TIME
                 LARGE_INTEGER EndCounter;
                 QueryPerformanceCounter(&EndCounter);
                 int64 DeltaCounter = EndCounter.QuadPart - LastCounter.QuadPart;    
                 real32 MSPerFrame = (1000 * (real32)DeltaCounter) / (real32)PerfCountFrequency;
                 int32 FPS = (int32)PerfCountFrequency / (int32)DeltaCounter;
 
+                // PERFORMANCE PROFILING
                 char Buffer[256];
                 sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
                 OutputDebugStringA(Buffer);

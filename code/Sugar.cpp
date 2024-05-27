@@ -9,16 +9,13 @@
 
 extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
-    if(IsKeyDown(KEY_MOUSE_LEFT, GameInput))
-    {
-    }
+    GameRenderData = GameRenderDataIn; 
 
-    GameRenderData = GameRenderDataIn;
-    for(int i = 0; i < 10; ++i) 
+    if(IsGameKeyDown(ATTACK, GameInput))
     {
-        for(int j = 0; j < 10; ++j) 
-        {
-            DrawSprite(SPRITE_DICE, {i * 100.0f, j * 100.0f}, {100.0f, 100.0f});
-        }
+        DrawSprite(SPRITE_DICE, 
+                 {(real32)GameInput->Keyboard.CurrentMouse.x - 50, 
+                  (real32)GameInput->Keyboard.CurrentMouse.y - 50}, 
+                  {100, 100});
     }
 }

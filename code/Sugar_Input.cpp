@@ -114,3 +114,7 @@ Win32LoadKeyData()
     KeyCodeLookup[VK_NUMPAD8] = KEY_NUMPAD_8;
     KeyCodeLookup[VK_NUMPAD9] = KEY_NUMPAD_9;
 }
+
+// EVENTUAL XINPUT STUFF MAYBE?
+/*
+*/
