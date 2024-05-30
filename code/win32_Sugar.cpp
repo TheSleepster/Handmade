@@ -7,11 +7,10 @@
     - DeltaTime (Kinda?)
 
 
-
     TODO 
     - Audio (DirectSound?, SokolAudio?, Or XAudio?)
     - Audio Formats (.WAV exclusively?)
-    - Asset Loading
+    - Asset Loading (Maybe defer this to the renderer? After all it is the renderer that uses them.)
     - Fullscreen
     - Multithreading
     - File Saving
@@ -24,7 +23,6 @@
     - ClipCursor(Multi Monitor)
     - Upload with WebAssembly
 */
-
 
 
 #include "Sugar_Intrinsics.h"
@@ -43,11 +41,22 @@
 
 #include "Sugar_OpenGLRenderer.cpp"
 #include "Sugar_Input.cpp"
-#include "Sugar_Physics.cpp"
+
+
+// For release builds Sugar.cpp will be a part of the main file. We need to make sure that the functions are
+// called correctly from the CPP file instead of from pointers in this configuration.
+#ifndef SUGAR_SLOW
+#include "Sugar.cpp"
+#endif
 
 global_variable bool GlobalRunning = {};
 global_variable int ClientWidth = {};
 global_variable int ClientHeight = {}; 
+
+
+#define SIMRATE ((1.0f/60.0f) * 1000.0f)
+
+#ifdef SUGAR_SLOW
 
 internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
@@ -90,6 +99,8 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
     Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
 }
 
+#endif
+
 internal XInputPointers 
 Win32LoadXInput(char *Filename) 
 {
@@ -108,7 +119,6 @@ Win32LoadXInput(char *Filename)
         Result.GetState = XInputGetStateStub;
         Result.SetState = XInputSetStateStub;
     }
-
     return(Result);
 }
 
@@ -124,11 +134,9 @@ Win32MainWindowCallback(HWND    hWnd,
         case WM_CLOSE: 
         {
             GlobalRunning = false;
-            DestroyWindow(hWnd);
         }break;
         case WM_DESTROY: 
         {
-            GlobalRunning = false;
             DestroyWindow(hWnd);
         }break;
         case WM_SIZE: 
@@ -191,10 +199,14 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
     if(!Win32OpenGL->wglCreateContextAttribsARB||
        !Win32OpenGL->wglChoosePixelFormatARB||
        !Win32OpenGL->wglSwapIntervalEXT) 
-
-    if(!Win32OpenGL->wglCreateContextAttribsARB||!Win32OpenGL->wglChoosePixelFormatARB) 
     {
-        Assert(false, "Failed to manually load WGL functions!\n");
+        MessageBoxA(WindowHandle, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+    } 
+
+    if(!Win32OpenGL->wglCreateContextAttribsARB||
+       !Win32OpenGL->wglChoosePixelFormatARB) 
+    {
+        MessageBoxA(WindowHandle, "Failed to manually load WGL functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE);
     }
     wglMakeCurrent(WindowDC, 0);
     wglDeleteContext(TempRC);
@@ -263,10 +275,10 @@ Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput)
 }
 
 int APIENTRY
-WinMain(HINSTANCE hInstance,
+wWinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
-        LPSTR     lpCmdLine,
-        int       nShowCmd) 
+        PWSTR     pCmdLine,
+        int       nCmdShow) 
 {
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
@@ -322,12 +334,14 @@ WinMain(HINSTANCE hInstance,
         if(!Win32OpenGL.wglChoosePixelFormatARB(WindowDC, PixelAttributes, 0, 1, &PixelFormat, &NumPixelFormats)) 
         {
             Assert(false, "Failed to choose the pixel format the second time\n");
+            MessageBoxA(WindowHandle, "Failed to load the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
         PIXELFORMATDESCRIPTOR DesiredPixelFormat = {};
         DescribePixelFormat(WindowDC, PixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &DesiredPixelFormat);
         if(!SetPixelFormat(WindowDC, PixelFormat, &DesiredPixelFormat)) 
         {
             Assert(false, "Failed to set the main PixelFormat\n");
+            MessageBoxA(WindowHandle, "Failed to set the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         const int ContextAttributes[] = 
@@ -343,15 +357,17 @@ WinMain(HINSTANCE hInstance,
         if(!RenderingContext) 
         {
             Assert(false, "Failed to create the RenderingContext\n");
+            MessageBoxA(WindowHandle, "Failed to set the Rendering Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         if(!wglMakeCurrent(WindowDC, RenderingContext)) 
         {
             Assert(false, "Failed to make current wglMakeCurrent(WindowDc, RenderingContext)\n");
+            MessageBoxA(WindowHandle, "Failed to set the Make the current the Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         // NOTE : VSYNC
-        Win32OpenGL.wglSwapIntervalEXT(1);
+        Win32OpenGL.wglSwapIntervalEXT(0);
         // NOTE : VSYNC
 
         if(WindowHandle) 
@@ -362,7 +378,11 @@ WinMain(HINSTANCE hInstance,
             
             GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
             Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
-            
+            if(!GameRenderData) 
+            {
+                MessageBoxA(WindowHandle, "Failed to set the Allocate memory!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+            }
+
             InitializeOpenGLRenderer(&GameMemory);
             Win32LoadKeyData(); 
 
@@ -388,6 +408,15 @@ WinMain(HINSTANCE hInstance,
             GameInput.Keyboard.Bindings[ATTACK].Key = KEY_MOUSE_LEFT;
 
             XInputPointers XInput = Win32LoadXInput("XInput1_4.dll");
+            if(!XInput.SetState,
+               !XInput.GetState) 
+            {
+                MessageBoxA(WindowHandle, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+                MessageBoxA(WindowHandle, "Failed to set the XInput Pointers!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+            }
+
+            real32 SimulationDelta = {};
+            real32 SimDeltaTime = {};
 
             while(GlobalRunning) 
             {
@@ -395,56 +424,65 @@ WinMain(HINSTANCE hInstance,
                 WindowData.WindowWidth = ClientWidth;
                 WindowData.WindowHeight = ClientHeight;
 
-                // MOUSE 
-                POINT MousePos;
-                GameInput.Keyboard.LastMouse.x = GameInput.Keyboard.CurrentMouse.x;
-                GameInput.Keyboard.LastMouse.y = GameInput.Keyboard.CurrentMouse.y;
-                GetCursorPos(&MousePos);
-                ScreenToClient(WindowHandle, &MousePos);
-                GameInput.Keyboard.CurrentMouse.x = MousePos.x;
-                GameInput.Keyboard.CurrentMouse.y = MousePos.y;
-                GameInput.Keyboard.RelMouse = GameInput.Keyboard.CurrentMouse - GameInput.Keyboard.LastMouse;
-
-                for(DWORD ControllerIndex = 0; 
-                    ControllerIndex < 1; 
-                    ++ControllerIndex) 
+                // TODO : Determine whether or not it's a mistake to use "ms" for the unit
+                if(SimulationDelta >= SIMRATE) 
                 {
-                    XINPUT_STATE ControllerState;
-                    if(XInput.GetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS) 
-                    {   
-                        XINPUT_GAMEPAD *Pad = &ControllerState.Gamepad;
+                    SimulationDelta -= SimDeltaTime;
 
-                        bool DPadUp = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
-                        bool DPadDown = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
-                        bool DPadLeft = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
-                        bool DPadRight = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
-                        bool StartButton = (Pad->wButtons & XINPUT_GAMEPAD_START);
-                        bool BackButton = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
-                        bool LeftThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_THUMB);
-                        bool RightThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_THUMB);
-                        bool LeftShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
-                        bool RightShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
-                        bool AButton = (Pad->wButtons & XINPUT_GAMEPAD_A);
-                        bool BButton = (Pad->wButtons & XINPUT_GAMEPAD_B);
-                        bool XButton = (Pad->wButtons & XINPUT_GAMEPAD_X);
-                        bool YButton = (Pad->wButtons & XINPUT_GAMEPAD_Y);
+                    // MOUSE 
+                    POINT MousePos;
+                    GameInput.Keyboard.LastMouse.x = GameInput.Keyboard.CurrentMouse.x;
+                    GameInput.Keyboard.LastMouse.y = GameInput.Keyboard.CurrentMouse.y;
+                    GetCursorPos(&MousePos);
+                    ScreenToClient(WindowHandle, &MousePos);
+                    GameInput.Keyboard.CurrentMouse.x = MousePos.x;
+                    GameInput.Keyboard.CurrentMouse.y = MousePos.y;
+                    GameInput.Keyboard.RelMouse = GameInput.Keyboard.CurrentMouse - GameInput.Keyboard.LastMouse;
 
-                        uint8 LeftTrigger = Pad->bLeftTrigger;
-                        uint8 RightTrigger = Pad->bRightTrigger;
+                    real32 InterpolateDelta = SimulationDelta / SIMRATE; 
+                    iVLerp(GameInput.Keyboard.CurrentMouse, GameInput.Keyboard.LastMouse, InterpolateDelta);
 
-                        int16 LeftStickX = Pad->sThumbLX;
-                        int16 LeftStickY = Pad->sThumbLY;
-                        int16 RightStickX = Pad->sThumbRX;
-                        int16 RightStickY = Pad->sThumbRY;
-
-                        XINPUT_VIBRATION Vibration = {};    
-                        Vibration.wLeftMotorSpeed = 6500;
-                        Vibration.wRightMotorSpeed = 6500;
-                        XInput.SetState(ControllerIndex, &Vibration);
-                    }
-                    else 
+                    for(DWORD ControllerIndex = 0; 
+                        ControllerIndex < 1; 
+                        ++ControllerIndex) 
                     {
-                        break; // NOTE : No controller avaliable
+                        XINPUT_STATE ControllerState;
+                        if(XInput.GetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS) 
+                        {   
+                            XINPUT_GAMEPAD *Pad = &ControllerState.Gamepad;
+
+                            bool DPadUp = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+                            bool DPadDown = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+                            bool DPadLeft = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+                            bool DPadRight = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+                            bool StartButton = (Pad->wButtons & XINPUT_GAMEPAD_START);
+                            bool BackButton = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
+                            bool LeftThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_THUMB);
+                            bool RightThumbDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_THUMB);
+                            bool LeftShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+                            bool RightShoulderDown = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+                            bool AButton = (Pad->wButtons & XINPUT_GAMEPAD_A);
+                            bool BButton = (Pad->wButtons & XINPUT_GAMEPAD_B);
+                            bool XButton = (Pad->wButtons & XINPUT_GAMEPAD_X);
+                            bool YButton = (Pad->wButtons & XINPUT_GAMEPAD_Y);
+
+                            uint8 LeftTrigger = Pad->bLeftTrigger;
+                            uint8 RightTrigger = Pad->bRightTrigger;
+
+                            int16 LeftStickX = Pad->sThumbLX;
+                            int16 LeftStickY = Pad->sThumbLY;
+                            int16 RightStickX = Pad->sThumbRX;
+                            int16 RightStickY = Pad->sThumbRY;
+
+                            XINPUT_VIBRATION Vibration = {};    
+                            Vibration.wLeftMotorSpeed = 6500;
+                            Vibration.wRightMotorSpeed = 6500;
+                            XInput.SetState(ControllerIndex, &Vibration);
+                        }
+                        else 
+                        {
+                            break; // NOTE : No controller avaliable
+                        }
                     }
                 }
 
@@ -476,11 +514,13 @@ WinMain(HINSTANCE hInstance,
                 sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
                 OutputDebugStringA(Buffer);
                 LastCounter = EndCounter;
+                SimulationDelta += MSPerFrame;
             }
         }
         else 
         {
             Assert(false, "Failed to create the WindowHandle!\n");
+            MessageBoxA(WindowHandle, "Failed to create the window handle!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
     }
     else 

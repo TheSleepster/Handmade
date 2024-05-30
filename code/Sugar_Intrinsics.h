@@ -8,6 +8,7 @@
 #else
 
 #define Assert(Expression, Message)
+#define Trace(Message)
 
 #endif
 

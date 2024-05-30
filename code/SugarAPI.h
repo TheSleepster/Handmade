@@ -21,13 +21,13 @@ struct RenderData
     Transform Transforms[MAX_TRANSFORMS];
 };
 
-// TODO : Change this from global when hot reloading is a thing
 static RenderData *GameRenderData;
 
 // API STUFF
 enum SpriteID 
 {
     SPRITE_DICE,
+    SPRITE_BLUE,
     SPRITE_COUNT
 };
 
@@ -47,6 +47,11 @@ inline Sprite GetSprite(SpriteID SpriteID)
             Sprite.AtlasOffset = {0, 0};
             Sprite.SpriteSize = {16, 16};
         }break;
+        case SPRITE_BLUE: 
+        {
+            Sprite.AtlasOffset = {16, 0};
+            Sprite.SpriteSize = {16, 16};
+        }
     }
     return(Sprite);
 }

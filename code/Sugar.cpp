@@ -3,6 +3,10 @@
 #include "SugarAPI.h"
 #include "Sugar_Input.h"
 
+// GAME UTILS
+#include "Sugar_Physics.cpp"
+//#include "Sugar_ECS.cpp"
+
 // TODO : Should the GameUpdateAndRender function ACTUALLY do the rendering? Should we be treating the OpenGL
 // Renderer in the same way we are treating the platform? Where instead of the GAME Rendering the items. We call
 // out to the renderer with information about what needs to be rendered.
