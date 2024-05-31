@@ -4,7 +4,8 @@
     COMPLETE
     - GameInput (Keyboard)
     - Keymapping?
-    - DeltaTime (Kinda?)
+    - DeltaTime
+    - GameInput(XInput)
 
 
     TODO 
@@ -17,7 +18,6 @@
     - Game Saving
     - Sleep/Inactivity Period
     - GetKeyboardLayout() (For non-standard QWERTY keyboards)
-    - GameInput(XInput)
     - Raw Input (For multiple inputs)
     - WM_ACTIVATEAPP (For being the inactive window)
     - ClipCursor(Multi Monitor)
@@ -37,10 +37,12 @@
 #include <windows.h>
 #include <wingdi.h>
 #include <xinput.h>
+
 #include "../data/deps/OpenGL/GLL.h"
 
 #include "Sugar_OpenGLRenderer.cpp"
 #include "Sugar_Input.cpp"
+#include "Sugar_Physics.cpp"
 
 
 // For release builds Sugar.cpp will be a part of the main file. We need to make sure that the functions are

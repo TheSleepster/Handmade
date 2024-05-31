@@ -4,22 +4,46 @@
 #include "Sugar_Input.h"
 
 // GAME UTILS
-#include "Sugar_Physics.cpp"
+#include "Sugar_GJK.cpp"
 //#include "Sugar_ECS.cpp"
-
-// TODO : Should the GameUpdateAndRender function ACTUALLY do the rendering? Should we be treating the OpenGL
-// Renderer in the same way we are treating the platform? Where instead of the GAME Rendering the items. We call
-// out to the renderer with information about what needs to be rendered.
 
 extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
     GameRenderData = GameRenderDataIn; 
 
-    if(IsGameKeyDown(ATTACK, GameInput))
+    vec2 Dice1Pos = {(real32)GameInput->Keyboard.CurrentMouse.x, 
+                    (real32)GameInput->Keyboard.CurrentMouse.y}; 
+
+    vec2 Dice2Pos = {200, 300};
+
+    vec2 Dice1Size = {100, 100};
+    vec2 Dice2Size = {100, 100};
+
+    Collider Dice1Box = {};
+    Collider Dice2Box = {};
+
+    // Define vertices for Dice1
+    Dice1Box.Vertices[0] = {Dice1Pos.x, Dice1Pos.y};
+    Dice1Box.Vertices[1] = {Dice1Pos.x + Dice1Size.x, Dice1Pos.y};
+    Dice1Box.Vertices[2] = {Dice1Pos.x + Dice1Size.x, Dice1Pos.y + Dice1Size.y};
+    Dice1Box.Vertices[3] = {Dice1Pos.x, Dice1Pos.y + Dice1Size.y};
+    Dice1Box.VertexCount = 4;
+
+    // Define vertices for Dice2
+    Dice2Box.Vertices[0] = {Dice2Pos.x, Dice2Pos.y};
+    Dice2Box.Vertices[1] = {Dice2Pos.x + Dice2Size.x, Dice2Pos.y};
+    Dice2Box.Vertices[2] = {Dice2Pos.x + Dice2Size.x, Dice2Pos.y + Dice2Size.y};
+    Dice2Box.Vertices[3] = {Dice2Pos.x, Dice2Pos.y + Dice2Size.y};
+    Dice2Box.VertexCount = 4;
+
+    DrawSprite(SPRITE_DICE, Dice1Pos, Dice1Size);
+    DrawSprite(SPRITE_DICE, Dice2Pos, Dice2Size);
+
+    int IsColliding = GJK(&Dice1Box, &Dice2Box);
+    char Buffer[256] = {};
+    if(IsColliding) 
     {
-        DrawSprite(SPRITE_DICE, 
-                 {(real32)GameInput->Keyboard.CurrentMouse.x - 50, 
-                  (real32)GameInput->Keyboard.CurrentMouse.y - 50}, 
-                  {100, 100});
+        sprintf(Buffer, "Collision!\n");
+        Trace(Buffer);
     }
 }
