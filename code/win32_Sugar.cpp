@@ -25,20 +25,17 @@
 */
 
 
+#include "../data/deps/OpenGL/GLL.h"
+
 #include "Sugar_Intrinsics.h"
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "Sugar_Input.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define EXTRA_LEAN
 #define NOMINMAX
 #include <windows.h>
-#include <wingdi.h>
 #include <xinput.h>
-
-#include "../data/deps/OpenGL/GLL.h"
 
 #include "Sugar_OpenGLRenderer.cpp"
 #include "Sugar_Input.cpp"
@@ -80,11 +77,15 @@ Win32LoadGamecode(char *SourceDLLName)
     {
         Result.UpdateAndRender = 
             (game_update_and_render *)GetProcAddress(Result.GameCodeDLL, "GameUpdateAndRender"); 
+        Result.InitData = 
+            (init_game_data *)GetProcAddress(Result.GameCodeDLL, "InitGameData");
+
         Result.IsValid = (Result.UpdateAndRender);
     }
     if(!Result.IsValid) 
     {
         Result.UpdateAndRender= GameUpdateAndRenderStub;
+        Result.InitData = InitGameDataStub;
     }
     return(Result);
 }
@@ -99,6 +100,7 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
     }
     Gamecode->IsValid = false;
     Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
+    Gamecode->InitData = InitGameDataStub;
 }
 
 #endif
@@ -202,13 +204,13 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
        !Win32OpenGL->wglChoosePixelFormatARB||
        !Win32OpenGL->wglSwapIntervalEXT) 
     {
-        MessageBoxA(WindowHandle, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+        MessageBoxA(0, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
     } 
 
     if(!Win32OpenGL->wglCreateContextAttribsARB||
        !Win32OpenGL->wglChoosePixelFormatARB) 
     {
-        MessageBoxA(WindowHandle, "Failed to manually load WGL functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE);
+        MessageBoxA(0, "Failed to manually load WGL functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE);
     }
     wglMakeCurrent(WindowDC, 0);
     wglDeleteContext(TempRC);
@@ -277,10 +279,10 @@ Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput)
 }
 
 int APIENTRY
-wWinMain(HINSTANCE hInstance,
+WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
-        PWSTR     pCmdLine,
-        int       nCmdShow) 
+        LPSTR     lpCmdLine,
+        int       nShowCmd) 
 {
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
@@ -335,15 +337,15 @@ wWinMain(HINSTANCE hInstance,
         int PixelFormat = 0;
         if(!Win32OpenGL.wglChoosePixelFormatARB(WindowDC, PixelAttributes, 0, 1, &PixelFormat, &NumPixelFormats)) 
         {
+            MessageBoxA(0, "Failed to load the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to choose the pixel format the second time\n");
-            MessageBoxA(WindowHandle, "Failed to load the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
         PIXELFORMATDESCRIPTOR DesiredPixelFormat = {};
         DescribePixelFormat(WindowDC, PixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &DesiredPixelFormat);
         if(!SetPixelFormat(WindowDC, PixelFormat, &DesiredPixelFormat)) 
         {
+            MessageBoxA(0, "Failed to set the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to set the main PixelFormat\n");
-            MessageBoxA(WindowHandle, "Failed to set the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         const int ContextAttributes[] = 
@@ -358,14 +360,14 @@ wWinMain(HINSTANCE hInstance,
         HGLRC RenderingContext = Win32OpenGL.wglCreateContextAttribsARB(WindowDC, 0, ContextAttributes);
         if(!RenderingContext) 
         {
+            MessageBoxA(0, "Failed to set the Rendering Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to create the RenderingContext\n");
-            MessageBoxA(WindowHandle, "Failed to set the Rendering Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         if(!wglMakeCurrent(WindowDC, RenderingContext)) 
         {
+            MessageBoxA(0, "Failed to set the Make the current the Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to make current wglMakeCurrent(WindowDc, RenderingContext)\n");
-            MessageBoxA(WindowHandle, "Failed to set the Make the current the Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
 
         // NOTE : VSYNC
@@ -413,12 +415,14 @@ wWinMain(HINSTANCE hInstance,
             if(!XInput.SetState,
                !XInput.GetState) 
             {
-                MessageBoxA(WindowHandle, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
-                MessageBoxA(WindowHandle, "Failed to set the XInput Pointers!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+                MessageBoxA(0, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+                MessageBoxA(0, "Failed to set the XInput Pointers!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
 
             real32 SimulationDelta = {};
             real32 SimDeltaTime = {};
+
+            Game.InitData(&GameMemory);
 
             while(GlobalRunning) 
             {
@@ -499,8 +503,12 @@ wWinMain(HINSTANCE hInstance,
                 // MESSAGES
                 Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
 
+#ifdef SUGAR_SLOW
                 // TODO : This will eventually go inside of out "Update()" loop
                 Game.UpdateAndRender(&GameMemory, GameRenderData, &GameInput);
+#else
+                GameUpdateAndRender(&GameMemory, GameRenderData, &GameInput);
+#endif
                 OpenGLRender(&GameMemory, &WindowData);
                 GameMemory.TransientStorage.Used = 0;
 
@@ -521,12 +529,13 @@ wWinMain(HINSTANCE hInstance,
         }
         else 
         {
+            MessageBoxA(0, "Failed to create the window handle!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to create the WindowHandle!\n");
-            MessageBoxA(WindowHandle, "Failed to create the window handle!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         }
     }
     else 
     {
+        MessageBoxA(0, "Failed to create the window Class!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
         Assert(false, "Failed to create the WindowClass!\n");
     }
     return(0);

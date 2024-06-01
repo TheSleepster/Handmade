@@ -65,6 +65,10 @@ LoadShader(int ShaderType, const char *Filepath, GameMemory *GameMemory)
             }
         }
     }
+    else 
+    {
+        MessageBoxA(0, "Failed to load Shader Code!\n", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
+    }
     return(ShaderID);
 }
 
@@ -139,9 +143,9 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
 {
     LoadGLFunctions();
 
-    glContext.VertexShaderFilepath = "../code/shader/BasicVertexShader.glsl";
-    glContext.FragmentShaderFilepath = "../code/shader/BasicFragmentShader.glsl";
-    glContext.TextureDataFilepath = "../data/res/textures/TextureAtlas.png";
+    glContext.VertexShaderFilepath = "res/shaders/BasicVertexShader.glsl";
+    glContext.FragmentShaderFilepath = "res/shaders/BasicFragmentShader.glsl";
+    glContext.TextureDataFilepath = "res/textures/TextureAtlas.png";
 
     glDebugMessageCallback(&OpenGLDebugCallback, nullptr);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

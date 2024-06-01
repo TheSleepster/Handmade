@@ -5,7 +5,11 @@
 
 // GAME UTILS
 #include "Sugar_GJK.cpp"
-//#include "Sugar_ECS.cpp"
+#include "Sugar_ECS.cpp"
+
+extern "C" INIT_GAME_DATA(InitGameData)
+{
+}
 
 extern "C" GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {

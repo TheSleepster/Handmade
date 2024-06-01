@@ -38,8 +38,9 @@ typedef int32 bool32;
 typedef float real32;
 typedef double real64;
 
-#define WIN32_LEAN_AND_MEAN
-#define EXTRA_LEAN
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include "Win32_Sugar.h"
 #include "SugarAPI.h"

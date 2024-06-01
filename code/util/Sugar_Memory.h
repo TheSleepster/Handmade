@@ -1,10 +1,18 @@
 #pragma once
-#include "Sugar.h"
-#include "Win32_Sugar.h"
-#include "Sugar_Intrinsics.h"
+#include "../Sugar.h"
+#include "../Win32_Sugar.h"
+#include "../Sugar_Intrinsics.h"
+
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+
 #define EXTRA_LEAN
+
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include <windows.h>
 
 struct BumpAllocator 
@@ -39,6 +47,6 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
         Result = BumpAllocator->Memory + BumpAllocator->Used;
         BumpAllocator->Used += AllignedSize;
     }
-    Assert(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity, "BumpAllocation failed!\n");
+    Assert(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity, "Not Enough Memory for Allocation!\n");
     return(Result);
 }
