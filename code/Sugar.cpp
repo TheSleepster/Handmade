@@ -58,6 +58,21 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             sprintf(Buffer, "Collision On Dice Entity!\n");
             OutputDebugStringA(Buffer);
         }
+        if(State.Entities[Entity].Flags & ACTIVE) 
+        {
+            sprintf(Buffer, "ACTIVE\n");
+            OutputDebugStringA(Buffer);
+        }
+        if(State.Entities[Entity].Flags & IS_STATIC) 
+        {
+            sprintf(Buffer, "STATIC\n");
+            OutputDebugStringA(Buffer);
+        }
+        if(State.Entities[Entity].Flags & TILE) 
+        {
+            sprintf(Buffer, "TILES\n");
+            OutputDebugStringA(Buffer);
+        }
     }
     
     char Buffer[256];

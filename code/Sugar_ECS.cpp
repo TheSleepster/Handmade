@@ -16,6 +16,7 @@ CreateDiceEntity(vec2 Pos, vec2 Scale, GameState *State)
 {
     Entity Entity = {};
 
+    Entity.Sprite = SPRITE_DICE;
     Entity.PhysicsBody.Size = Scale;
     Entity.EntityID = EntityIndex;
 
@@ -39,10 +40,10 @@ CreateDiceEntity(vec2 Pos, vec2 Scale, GameState *State)
         {Entity.PhysicsBody.Position.x, 
          Entity.PhysicsBody.Position.y + Entity.PhysicsBody.Size.y};
     Entity.Collider.VertexCount = 4;
-
-    Entity.Sprite = SPRITE_DICE;
     
-    Entity.Flags
+    Entity.Flags |= (ACTIVE & 1 << 0);
+    Entity.Flags |= (IS_STATIC & 1 << 2);
+    Entity.Flags |= (TILE & 1 << 4);
 
     State->Entities[EntityIndex] = Entity;
     ++EntityIndex;
@@ -59,18 +60,6 @@ DrawEntity(Entity *Entity)
 //        It seems a little naive but perhaps this will allow better organization for entities
 //        in the long run
 #if 0
-
-enum EntityFlags 
-{
-    ACTIVE       = 1 << 0,
-    PLAYER       = 1 << 1,
-    IS_STATIC    = 1 << 2,
-    AI           = 1 << 2,
-    TILE         = 1 << 3,
-    HAS_PHYSICS  = 1 << 4,
-    RENDERABLE   = 1 << 5,
-    IS_DEAD      = 1 << 6,
-};
 
 struct Entity 
 {

@@ -31,10 +31,22 @@ enum EntityType
     ENTITYTYPECOUNT
 };
 
+enum EntityFlags 
+{
+    ACTIVE       = 1 << 0,
+    PLAYER       = 1 << 1,
+    IS_STATIC    = 1 << 2,
+    AI           = 1 << 3,
+    TILE         = 1 << 4,
+    HAS_PHYSICS  = 1 << 5,
+    RENDERABLE   = 1 << 6,
+    IS_DEAD      = 1 << 7,
+};
+
 struct Entity 
 {
     uint32 EntityID;
-    uint64 *Flags;
+    uint64 Flags;
 
     RigidBody PhysicsBody;
     Collider Collider;
