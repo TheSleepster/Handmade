@@ -88,4 +88,3 @@ struct GameState
     Entity Player;
 };
 #endif
-

@@ -378,7 +378,7 @@ WinMain(HINSTANCE hInstance,
         {
             GameMemory GameMemory = {};
             GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
-            GameMemory.TransientStorage = MakeBumpAllocator(Gigabytes(1));
+            GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(200));
             
             GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
             Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
@@ -434,6 +434,9 @@ WinMain(HINSTANCE hInstance,
                 if(SimulationDelta >= SIMRATE) 
                 {
                     SimulationDelta -= SimDeltaTime;
+
+                    // MESSAGES
+                    Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
                     
                     // MOUSE 
                     POINT MousePos;
@@ -499,9 +502,6 @@ WinMain(HINSTANCE hInstance,
                     Game = Win32LoadGamecode(SourceDLLName);
                 }
 
-                // MESSAGES
-                Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
-
 #ifdef SUGAR_SLOW
                 // TODO : This will eventually go inside of out "Update()" loop
                 Game.UpdateAndRender(&GameMemory, GameRenderData, &GameInput);
@@ -509,8 +509,9 @@ WinMain(HINSTANCE hInstance,
                 GameUpdateAndRender(&GameMemory, GameRenderData, &GameInput);
 #endif
                 OpenGLRender(&GameMemory, &WindowData);
-                GameMemory.TransientStorage.Used = 0;
 
+                // RESET MEMORY
+                BumpReset(&GameMemory.TransientStorage);
                 // DELTA TIME
                 LARGE_INTEGER EndCounter;
                 QueryPerformanceCounter(&EndCounter);

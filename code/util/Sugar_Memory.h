@@ -15,11 +15,18 @@
 
 #include <windows.h>
 
+struct FreeList 
+{
+    struct FreeList *NextChunk;
+};
+
 struct BumpAllocator 
 {
     size_t Capacity;
     size_t Used;
     char* Memory;
+
+    FreeList *FreeList;
 };
 
 inline BumpAllocator 
@@ -30,6 +37,7 @@ MakeBumpAllocator(size_t Size)
     if(BumpAllocator.Memory) 
     {
         BumpAllocator.Capacity = Size;
+        BumpAllocator.FreeList = 0;
         memset(BumpAllocator.Memory, 0, Size);
     }
     Assert(BumpAllocator.Memory, "Failed to create the BumpAllocator!\n");
@@ -42,6 +50,14 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
 {
     char *Result = nullptr;
     size_t AllignedSize = (Size + 7) & ~ 7;
+    if(BumpAllocator->FreeList) 
+    {
+        FreeList *Chunk = BumpAllocator->FreeList;
+        BumpAllocator->FreeList = Chunk->NextChunk;
+
+        return((char *)Chunk);
+    }
+
     if(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity) 
     {
         Result = BumpAllocator->Memory + BumpAllocator->Used;
@@ -49,4 +65,26 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
     }
     Assert(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity, "Not Enough Memory for Allocation!\n");
     return(Result);
+}
+
+inline void
+BumpDealloc(BumpAllocator *BumpAllocator, void *Data) 
+{
+    FreeList *FreeList = (struct FreeList *)Data;
+    FreeList->NextChunk = BumpAllocator->FreeList;
+    BumpAllocator->FreeList = FreeList;
+}
+
+inline void 
+BumpReset(BumpAllocator *BumpAllocator) 
+{
+    BumpAllocator->Used = 0;
+    BumpAllocator->FreeList = 0;
+}
+
+inline void 
+BumpDestroy(BumpAllocator *BumpAllocator) 
+{
+    VirtualFree(&BumpAllocator, sizeof(BumpAllocator->Memory), MEM_RELEASE);
+    BumpAllocator = nullptr;
 }
