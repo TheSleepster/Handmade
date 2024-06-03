@@ -434,7 +434,7 @@ WinMain(HINSTANCE hInstance,
                 if(SimulationDelta >= SIMRATE) 
                 {
                     SimulationDelta -= SimDeltaTime;
-
+                    
                     // MOUSE 
                     POINT MousePos;
                     GameInput.Keyboard.LastMouse.x = GameInput.Keyboard.CurrentMouse.x;
@@ -444,7 +444,7 @@ WinMain(HINSTANCE hInstance,
                     GameInput.Keyboard.CurrentMouse.x = MousePos.x;
                     GameInput.Keyboard.CurrentMouse.y = MousePos.y;
                     GameInput.Keyboard.RelMouse = GameInput.Keyboard.CurrentMouse - GameInput.Keyboard.LastMouse;
-
+                    
                     real32 InterpolateDelta = SimulationDelta / SIMRATE; 
                     iVLerp(GameInput.Keyboard.CurrentMouse, GameInput.Keyboard.LastMouse, InterpolateDelta);
 
@@ -474,7 +474,6 @@ WinMain(HINSTANCE hInstance,
 
                             uint8 LeftTrigger = Pad->bLeftTrigger;
                             uint8 RightTrigger = Pad->bRightTrigger;
-
                             int16 LeftStickX = Pad->sThumbLX;
                             int16 LeftStickY = Pad->sThumbLY;
                             int16 RightStickX = Pad->sThumbRX;
@@ -518,12 +517,14 @@ WinMain(HINSTANCE hInstance,
                 int64 DeltaCounter = EndCounter.QuadPart - LastCounter.QuadPart;    
                 real32 MSPerFrame = (1000 * (real32)DeltaCounter) / (real32)PerfCountFrequency;
                 int32 FPS = (int32)PerfCountFrequency / (int32)DeltaCounter;
+                SimulationDelta += MSPerFrame;       // DELTA TIME
 
                 // PERFORMANCE PROFILING
                 char Buffer[256];
                 sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
                 OutputDebugStringA(Buffer);
                 LastCounter = EndCounter;
+
                 SimulationDelta += MSPerFrame;
             }
         }

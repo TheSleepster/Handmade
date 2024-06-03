@@ -1,4 +1,10 @@
-#include "Sugar_GJK.h"
+#include "Sugar_Intrinsics.h"
+#include "util/Sugar_Math.h"
+#include "win32_Sugar.h"
+#include "Sugar.h"
+#include "SugarAPI.h"
+
+#include "Sugar_ECS.h"
 
 internal vec2
 AveragePoint(Collider *A) 
@@ -92,7 +98,6 @@ GJK(Collider *A, Collider *B)
         }
 
         AO = vInverse(RegionA); // From point A to Origin is likely just negative A
-        
         // Simplex has 2 points, it is not a triangle yet.
         if(Index < 2) 
         {
@@ -111,7 +116,7 @@ GJK(Collider *A, Collider *B)
 
         AB = RegionB - RegionA; // Normal from AB to the origin
         AC = RegionC - RegionA;
-        
+            
         ACPerp = TripleProduct(AB, AC, AC);
         if(vDot(ACPerp, AO) >= 0) 
         { 

@@ -44,7 +44,7 @@ Win32LoadKeyData()
     KeyCodeLookup['7'] = KEY_7;
     KeyCodeLookup['8'] = KEY_8;
     KeyCodeLookup['9'] = KEY_9;
-
+    
     KeyCodeLookup[VK_SPACE] = KEY_SPACE,
     KeyCodeLookup[VK_OEM_3] = KEY_TICK,
     KeyCodeLookup[VK_OEM_MINUS] = KEY_MINUS,
@@ -118,3 +118,4 @@ Win32LoadKeyData()
 // EVENTUAL XINPUT STUFF MAYBE?
 /*
 */
+            
