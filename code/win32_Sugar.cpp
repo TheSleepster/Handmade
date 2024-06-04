@@ -87,6 +87,7 @@ Win32LoadGamecode(char *SourceDLLName)
         Result.UpdateAndRender= GameUpdateAndRenderStub;
         Result.InitData = InitGameDataStub;
     }
+    Sleep(100);
     return(Result);
 }
 
@@ -99,6 +100,7 @@ Win32UnloadGamecode(Win32GameCode *Gamecode)
         Gamecode->GameCodeDLL = 0;
     }
     Gamecode->IsValid = false;
+    Gamecode->IsLoaded = false;
     Gamecode->UpdateAndRender = GameUpdateAndRenderStub;
     Gamecode->InitData = InitGameDataStub;
 }
@@ -430,6 +432,14 @@ WinMain(HINSTANCE hInstance,
 
             while(GlobalRunning) 
             {
+                // HOTRELOADING
+                FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
+                if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
+                {
+                    Win32UnloadGamecode(&Game);
+                    Game = Win32LoadGamecode(SourceDLLName);
+                }
+
                 MSG Message = {};
                 WindowData.WindowWidth = ClientWidth;
                 WindowData.WindowHeight = ClientHeight;
@@ -496,14 +506,6 @@ WinMain(HINSTANCE hInstance,
                             break; // NOTE : No controller avaliable
                         }
                     }
-                }
-
-                // HOTRELOADING
-                FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
-                if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
-                {
-                    Win32UnloadGamecode(&Game);
-                    Game = Win32LoadGamecode(SourceDLLName);
                 }
 
 #ifdef SUGAR_SLOW

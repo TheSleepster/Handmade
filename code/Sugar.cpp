@@ -8,7 +8,7 @@
 
 // GAME UTILS
 #include "Sugar_GJK.cpp"
-#include "Sugar_ECS.cpp"
+#include "Sugar_API.cpp"
 
 extern "C" 
 INIT_GAME_DATA(InitGameData)
@@ -21,9 +21,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     ArrayInit(&State->GameMemory.PermanentStorage, &State->Entities, 10);
 
     // NOTE : Add renderData and the game's memory to gamestate
-    if(IsGameKeyDown(ATTACK, GameInput)) 
-    {
-        CreateEntity(SPRITE_DICE, {150, 200}, {300, 300}, &State->Entities, &State->GameMemory.PermanentStorage);
-        DrawEntity((Entity *)ArrayGetElement(&State->Entities, 0), State);
-    }
+    CreateEntity(SPRITE_DICE, {150, 200}, {300, 300}, &State->Entities, &State->GameMemory.PermanentStorage);
+    DrawEntity(State, 0);
+    KillEntity(State, 0);
 } 

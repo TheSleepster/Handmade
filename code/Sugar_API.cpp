@@ -1,3 +1,4 @@
+#include "SugarAPI.h"
 #include "Sugar_Intrinsics.h"
 #include "util/Sugar_Math.h"
 #include "win32_Sugar.h"
@@ -5,10 +6,22 @@
 #include "SugarAPI.h"
 
 #include "Sugar_ECS.h"
-// NOTE : Maybe look into a function for each specific type of entity rather than 1 massive switch-case
 
-// TODO : ID manager?
+internal void 
+DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
+{
+    Sprite Sprite = GetSprite(SpriteID);
+    Transform transform = {};
+    transform.Position = Pos;
+    transform.Size = Size;
+    transform.AtlasOffset = Sprite.AtlasOffset;
+    transform.SpriteSize = Sprite.SpriteSize;
 
+    RenderData->Transforms[RenderData->TransformCount++] = transform;
+}
+
+// TODO : Allow users to pass in the type of Collider/Flags.
+//        Perhaps make helper functions for generic Archetypes? (Dice, Player, Enemy, Wall, etc.)
 internal bool 
 CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, DynamicArray *Array, BumpAllocator *Memory) 
 {
@@ -52,8 +65,15 @@ CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, DynamicArray *Array, BumpAl
     return(1);
 }
 
-internal void 
-DrawEntity(Entity *Entity, GameState *State) 
+internal void
+KillEntity(GameState *State, uint32 Index) 
 {
-    DrawSprite(Entity->Sprite.SpriteID, Entity->Transform.CurrentPosition, Entity->Transform.Size, State->RenderData);
+    ArrayRemove(&State->Entities, Index);
+}
+
+internal void 
+DrawEntity(GameState *State, uint32 Index) 
+{
+    Entity *IndexEntity = (Entity *)ArrayGetElement(&State->Entities, Index);
+    DrawSprite(IndexEntity->Sprite.SpriteID, IndexEntity->Transform.CurrentPosition, IndexEntity->Transform.Size, State->RenderData);
 }

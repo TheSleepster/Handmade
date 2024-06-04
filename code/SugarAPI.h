@@ -21,13 +21,6 @@ struct RenderData
     Transform Transforms[MAX_TRANSFORMS];
 };
 
-// TODO :
-// Perhaps change this so that the "GameUpdateAndRender" function will return "RenderData".
-// This would make it so that this would not have to be a global value and would make life really easy
-// for multithreading.
-// The other option is to still keep the Globals to a minimum, you can however just stuff them into a single
-// header file so that the data can be accessed and read from really simply. (preferrable?)
-
 // API STUFF
 enum SpriteID 
 {
@@ -59,17 +52,4 @@ inline Sprite GetSprite(SpriteID SpriteID)
         }
     }
     return(Sprite);
-}
-
-inline void 
-DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
-{
-    Sprite Sprite = GetSprite(SpriteID);
-    Transform transform = {};
-    transform.Position = Pos;
-    transform.Size = Size;
-    transform.AtlasOffset = Sprite.AtlasOffset;
-    transform.SpriteSize = Sprite.SpriteSize;
-
-    RenderData->Transforms[RenderData->TransformCount++] = transform;
 }
