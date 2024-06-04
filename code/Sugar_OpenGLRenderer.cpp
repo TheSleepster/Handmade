@@ -7,34 +7,17 @@
 #include "../data/deps/stbimage/stb_image.h"
 #include "../data/deps/OpenGL/GLL.h"
 
-struct glContext 
-{
-    GLuint ProgramID; 
-    GLuint TextureID;
-    GLuint TransformSBOID;
-    GLuint ScreenSizeID;
-    
-    const char *VertexShaderFilepath;
-    const char *FragmentShaderFilepath;
-    const char *TextureDataFilepath;
-
-    FILETIME TextureTimestamp;
-    FILETIME ShaderTimestamp;
-};
-
-global_variable glContext glContext = {};
-
 // TODO : Make these "GetLastWriteTime" functions platform agnostic
 
 internal void
-LoadTexture(const char *Filepath) 
+LoadTexture(const char *Filepath, GameState *State) 
 {
     glActiveTexture(GL_TEXTURE0);
     int Width, Height, Channels;
     char *Result = (char *)stbi_load(Filepath, &Width, &Height, &Channels, 4); 
     if(Result) 
     {
-        glContext.TextureTimestamp = Win32GetLastWriteTime(Filepath);
+        State->glContext.TextureTimestamp = Win32GetLastWriteTime(Filepath);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, Width, Height,
                      0, GL_RGBA, GL_UNSIGNED_BYTE, Result);
         stbi_image_free(Result);
@@ -73,36 +56,36 @@ LoadShader(int ShaderType, const char *Filepath, GameMemory *GameMemory)
 }
 
 internal void
-OpenGLRender(GameMemory *GameMemory, Win32_WindowData *WindowData) 
+OpenGLRender(GameState *State, Win32_WindowData *WindowData) 
 {
-    FILETIME NewTextureWriteTime = Win32GetLastWriteTime(glContext.TextureDataFilepath);
-    if(CompareFileTime(&NewTextureWriteTime, &glContext.TextureTimestamp) != 0) 
+    FILETIME NewTextureWriteTime = Win32GetLastWriteTime(State->glContext.TextureDataFilepath);
+    if(CompareFileTime(&NewTextureWriteTime, &State->glContext.TextureTimestamp) != 0) 
     {
-        LoadTexture(glContext.TextureDataFilepath);
+        LoadTexture(State->glContext.TextureDataFilepath, State);
     }
     
-    FILETIME TimeStampVertex = Win32GetLastWriteTime(glContext.VertexShaderFilepath); 
-    FILETIME TimeStampFragment = Win32GetLastWriteTime(glContext.FragmentShaderFilepath); 
-    if(CompareFileTime(&TimeStampVertex, &glContext.ShaderTimestamp) != 0||
-       CompareFileTime(&TimeStampFragment, &glContext.ShaderTimestamp) != 0) 
+    FILETIME TimeStampVertex = Win32GetLastWriteTime(State->glContext.VertexShaderFilepath); 
+    FILETIME TimeStampFragment = Win32GetLastWriteTime(State->glContext.FragmentShaderFilepath); 
+    if(CompareFileTime(&TimeStampVertex, &State->glContext.ShaderTimestamp) != 0||
+       CompareFileTime(&TimeStampFragment, &State->glContext.ShaderTimestamp) != 0) 
     { 
         GLuint VertexShaderID = 
-            LoadShader(GL_VERTEX_SHADER, glContext.VertexShaderFilepath, GameMemory);
+            LoadShader(GL_VERTEX_SHADER, State->glContext.VertexShaderFilepath, &State->GameMemory);
         GLuint FragmentShaderID = 
-            LoadShader(GL_FRAGMENT_SHADER, glContext.FragmentShaderFilepath, GameMemory);
+            LoadShader(GL_FRAGMENT_SHADER, State->glContext.FragmentShaderFilepath, &State->GameMemory);
 
-        glAttachShader(glContext.ProgramID, VertexShaderID);
-        glAttachShader(glContext.ProgramID, FragmentShaderID);
-        glLinkProgram(glContext.ProgramID);
+        glAttachShader(State->glContext.ProgramID, VertexShaderID);
+        glAttachShader(State->glContext.ProgramID, FragmentShaderID);
+        glLinkProgram(State->glContext.ProgramID);
 
-        glDetachShader(glContext.ProgramID, VertexShaderID);
-        glDetachShader(glContext.ProgramID, FragmentShaderID);
+        glDetachShader(State->glContext.ProgramID, VertexShaderID);
+        glDetachShader(State->glContext.ProgramID, FragmentShaderID);
         glDeleteShader(VertexShaderID);
         glDeleteShader(FragmentShaderID);
 
-        TimeStampVertex = Win32GetLastWriteTime(glContext.VertexShaderFilepath); 
-        TimeStampFragment = Win32GetLastWriteTime(glContext.FragmentShaderFilepath); 
-        glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
+        TimeStampVertex = Win32GetLastWriteTime(State->glContext.VertexShaderFilepath); 
+        TimeStampFragment = Win32GetLastWriteTime(State->glContext.FragmentShaderFilepath); 
+        State->glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
     }
 
     glClearColor(1.0f, 0.1f, 1.0f, 1.0f);
@@ -111,12 +94,12 @@ OpenGLRender(GameMemory *GameMemory, Win32_WindowData *WindowData)
     glViewport(0, 0, WindowData->WindowWidth, WindowData->WindowHeight);
 
     vec2 ScreenSize = {(real32)WindowData->WindowWidth, (real32)WindowData->WindowHeight};
-    glUniform2fv(glContext.ScreenSizeID, 1, &ScreenSize.x);
+    glUniform2fv(State->glContext.ScreenSizeID, 1, &ScreenSize.x);
 
     glBufferSubData
-        (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * GameRenderData->TransformCount, GameRenderData->Transforms);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, GameRenderData->TransformCount);
-    GameRenderData->TransformCount = 0;
+        (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * State->RenderData->TransformCount, State->RenderData->Transforms);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, State->RenderData->TransformCount);
+    State->RenderData->TransformCount = 0;
     SwapBuffers(WindowData->WindowDC);
 }
 
@@ -139,13 +122,13 @@ OpenGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 // TODO : Clean this up. Idrk how you can though.
 
 internal void
-InitializeOpenGLRenderer(GameMemory *GameMemory)
+InitializeOpenGLRenderer(GameState *State)
 {
     LoadGLFunctions();
 
-    glContext.VertexShaderFilepath = "res/shaders/BasicVertexShader.glsl";
-    glContext.FragmentShaderFilepath = "res/shaders/BasicFragmentShader.glsl";
-    glContext.TextureDataFilepath = "res/textures/TextureAtlas.png";
+    State->glContext.VertexShaderFilepath = "res/shaders/BasicVertexShader.glsl";
+    State->glContext.FragmentShaderFilepath = "res/shaders/BasicFragmentShader.glsl";
+    State->glContext.TextureDataFilepath = "res/textures/TextureAtlas.png";
 
     glDebugMessageCallback(&OpenGLDebugCallback, nullptr);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -153,35 +136,35 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
 
     // LOAD A SHADER
     GLuint VertexShaderID = 
-        LoadShader(GL_VERTEX_SHADER, glContext.VertexShaderFilepath, GameMemory);
+        LoadShader(GL_VERTEX_SHADER, State->glContext.VertexShaderFilepath, &State->GameMemory);
     GLuint FragmentShaderID = 
-        LoadShader(GL_FRAGMENT_SHADER, glContext.FragmentShaderFilepath, GameMemory);
+        LoadShader(GL_FRAGMENT_SHADER, State->glContext.FragmentShaderFilepath, &State->GameMemory);
 
-    FILETIME TimeStampVertex = Win32GetLastWriteTime(glContext.VertexShaderFilepath); 
-    FILETIME TimeStampFragment = Win32GetLastWriteTime(glContext.FragmentShaderFilepath); 
-    glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
+    FILETIME TimeStampVertex = Win32GetLastWriteTime(State->glContext.VertexShaderFilepath); 
+    FILETIME TimeStampFragment = Win32GetLastWriteTime(State->glContext.FragmentShaderFilepath); 
+    State->glContext.ShaderTimestamp = maxFiletime(TimeStampVertex, TimeStampFragment);
     // END OF LOADING
 
-    glContext.ProgramID = glCreateProgram();
-    glAttachShader(glContext.ProgramID, VertexShaderID);
-    glAttachShader(glContext.ProgramID, FragmentShaderID);
-    glLinkProgram(glContext.ProgramID);
+    State->glContext.ProgramID = glCreateProgram();
+    glAttachShader(State->glContext.ProgramID, VertexShaderID);
+    glAttachShader(State->glContext.ProgramID, FragmentShaderID);
+    glLinkProgram(State->glContext.ProgramID);
 
     // NOTE : Local scope to test for the successful compilation of the Program
     {
         int Success;
         char ProgramLog[2048] = {};
 
-        glGetProgramiv(glContext.ProgramID, GL_LINK_STATUS, &Success);
+        glGetProgramiv(State->glContext.ProgramID, GL_LINK_STATUS, &Success);
         if(!Success) 
         {
-            glGetProgramInfoLog(glContext.ProgramID, 2048, 0, ProgramLog);
+            glGetProgramInfoLog(State->glContext.ProgramID, 2048, 0, ProgramLog);
             Assert(false, ProgramLog); 
         }
     }
 
-    glDetachShader(glContext.ProgramID, VertexShaderID);
-    glDetachShader(glContext.ProgramID, FragmentShaderID);
+    glDetachShader(State->glContext.ProgramID, VertexShaderID);
+    glDetachShader(State->glContext.ProgramID, FragmentShaderID);
     glDeleteShader(VertexShaderID);
     glDeleteShader(FragmentShaderID);
 
@@ -191,7 +174,7 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
 
     // NOTE : Testing Texture Rendering
     int Width, Height, Channels;
-    char *Data = (char *)stbi_load(glContext.TextureDataFilepath, &Width, &Height, &Channels, 4); 
+    char *Data = (char *)stbi_load(State->glContext.TextureDataFilepath, &Width, &Height, &Channels, 4); 
     Assert(Data, "Failed to get the TextureAtlas' data!\n");
 
     // NOTE : This is similar to creating a WGL context.
@@ -200,10 +183,10 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
     // - You Assign some attributes to it
     // - Use it
     {
-        glGenTextures(1, &glContext.TextureID);
+        glGenTextures(1, &State->glContext.TextureID);
         glActiveTexture(GL_TEXTURE0);
 
-        glBindTexture(GL_TEXTURE_2D, glContext.TextureID);
+        glBindTexture(GL_TEXTURE_2D, State->glContext.TextureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -214,17 +197,17 @@ InitializeOpenGLRenderer(GameMemory *GameMemory)
         stbi_image_free(Data);
     }
 
-    glGenBuffers(1, &glContext.TransformSBOID);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.TransformSBOID);
+    glGenBuffers(1, &State->glContext.TransformSBOID);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, State->glContext.TransformSBOID);
 
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Transform) * MAX_TRANSFORMS, 
-            GameRenderData->Transforms, GL_DYNAMIC_DRAW);
-    glContext.ScreenSizeID = glGetUniformLocation(glContext.ProgramID, "ScreenSize");
+            State->RenderData->Transforms, GL_DYNAMIC_DRAW);
+    State->glContext.ScreenSizeID = glGetUniformLocation(State->glContext.ProgramID, "ScreenSize");
 
     glEnable(GL_FRAMEBUFFER_SRGB);
     glDisable(0x809D); // Disable multisampling
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
 
-    glUseProgram(glContext.ProgramID);
+    glUseProgram(State->glContext.ProgramID);
 }

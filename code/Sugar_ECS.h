@@ -59,8 +59,3 @@ struct Entity
     ColliderComponent Collider;
     SpriteComponent Sprite;
 };
-
-struct GameState 
-{
-    DynamicArray Entities;
-};

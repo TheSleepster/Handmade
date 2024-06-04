@@ -63,7 +63,7 @@ enum KeyCodeID
     KEY_NUMPAD_5,
     KEY_NUMPAD_6,
     KEY_NUMPAD_7,
-    KEY_NUMPAD_8,
+   KEY_NUMPAD_8,
     KEY_NUMPAD_9,
 
     KEY_NUMPAD_STAR,
@@ -179,9 +179,6 @@ IsGameKeyDown(KeyBindings InputType, Input *GameInput)
     }
     return(false);
 }
-
-
-global_variable KeyCodeID KeyCodeLookup[KEY_COUNT]; 
 
 #define XINPUT_SET_STATE(name) DWORD name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
 typedef XINPUT_SET_STATE(xinput_set_state);

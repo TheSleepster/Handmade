@@ -53,7 +53,7 @@ CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, DynamicArray *Array, BumpAl
 }
 
 internal void 
-DrawEntity(Entity *Entity) 
+DrawEntity(Entity *Entity, GameState *State) 
 {
-    DrawSprite(Entity->Sprite.SpriteID, Entity->Transform.CurrentPosition, Entity->Transform.Size);
+    DrawSprite(Entity->Sprite.SpriteID, Entity->Transform.CurrentPosition, Entity->Transform.Size, State->RenderData);
 }

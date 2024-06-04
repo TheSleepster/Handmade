@@ -218,7 +218,10 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
 }
 
 internal void 
-Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput) 
+Win32ProcessInputMessages(MSG Message, 
+                          HWND WindowHandle, 
+                          Input *GameInput, 
+                          GameState *State) 
 {
     while(PeekMessageA(&Message, WindowHandle, 0, 0, PM_REMOVE)) 
     {
@@ -238,7 +241,7 @@ Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput)
                 bool WasDown = ((Message.lParam & (1 << 30)) != 0);
                 bool IsDown = ((Message.lParam & (1 << 31)) == 0);
                 
-                KeyCodeID KeyCode = KeyCodeLookup[Message.wParam];
+                KeyCodeID KeyCode = State->KeyCodeLookup[Message.wParam];
                 Key *Key = &GameInput->Keyboard.Keys[KeyCode];
                 Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
                 Key->JustReleased = !Key->JustReleased && Key->IsDown && !IsDown;
@@ -263,7 +266,7 @@ Win32ProcessInputMessages(MSG Message, HWND WindowHandle, Input *GameInput)
                 uint32 VKCode = (uint32)Message.wParam;
                 bool IsDown = (GetKeyState(VKCode) & (1 << 15));
 
-                KeyCodeID KeyCode = KeyCodeLookup[Message.wParam];
+                KeyCodeID KeyCode = State->KeyCodeLookup[Message.wParam];
                 Key *Key = &GameInput->Keyboard.Keys[KeyCode];
                 Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
                 Key->JustReleased = !Key->JustReleased && Key->IsDown && !IsDown;
@@ -376,21 +379,20 @@ WinMain(HINSTANCE hInstance,
 
         if(WindowHandle) 
         {
+            GameState GameState = {};
+            GameState.GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
+            GameState.GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(1000));
+            GameState.KeyCodeLookup[KEY_COUNT] = {};
             
-
-            GameMemory GameMemory = {};
-            GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
-            GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(200));
-            
-            GameRenderData = (RenderData*)BumpAllocate(&GameMemory.PermanentStorage, sizeof(RenderData));
-            Assert(GameRenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
-            if(!GameRenderData) 
+            GameState.RenderData = (RenderData *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(RenderData));
+            Assert(GameState.RenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
+            if(!GameState.RenderData) 
             {
                 MessageBoxA(WindowHandle, "Failed to set the Allocate memory!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
 
-            InitializeOpenGLRenderer(&GameMemory);
-            Win32LoadKeyData(); 
+            InitializeOpenGLRenderer(&GameState);
+            Win32LoadKeyData(&GameState); 
 
             char *SourceDLLName = "GameCode.dll";
             Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
@@ -424,7 +426,7 @@ WinMain(HINSTANCE hInstance,
             real32 SimulationDelta = {};
             real32 SimDeltaTime = {};
 
-            Game.InitData(&GameMemory);
+            Game.InitData(&GameState);
 
             while(GlobalRunning) 
             {
@@ -438,7 +440,7 @@ WinMain(HINSTANCE hInstance,
                     SimulationDelta -= SimDeltaTime;
 
                     // MESSAGES
-                    Win32ProcessInputMessages(Message, WindowHandle, &GameInput);
+                    Win32ProcessInputMessages(Message, WindowHandle, &GameInput, &GameState);
                     
                     // MOUSE 
                     POINT MousePos;
@@ -506,14 +508,14 @@ WinMain(HINSTANCE hInstance,
 
 #ifdef SUGAR_SLOW
                 // TODO : This will eventually go inside of out "Update()" loop
-                Game.UpdateAndRender(&GameMemory, GameRenderData, &GameInput);
+                Game.UpdateAndRender(&GameState, &GameInput);
 #else
-                GameUpdateAndRender(&GameMemory, GameRenderData, &GameInput);
+                GameUpdateAndRender(&GameState, &GameInput);
 #endif
-                OpenGLRender(&GameMemory, &WindowData);
+                OpenGLRender(&GameState, &WindowData);
 
                 // RESET MEMORY
-                BumpReset(&GameMemory.TransientStorage);
+                BumpReset(&GameState.GameMemory.TransientStorage);
                 // DELTA TIME
                 LARGE_INTEGER EndCounter;
                 QueryPerformanceCounter(&EndCounter);

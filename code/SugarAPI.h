@@ -28,8 +28,6 @@ struct RenderData
 // The other option is to still keep the Globals to a minimum, you can however just stuff them into a single
 // header file so that the data can be accessed and read from really simply. (preferrable?)
 
-static RenderData *GameRenderData;
-
 // API STUFF
 enum SpriteID 
 {
@@ -63,7 +61,8 @@ inline Sprite GetSprite(SpriteID SpriteID)
     return(Sprite);
 }
 
-inline void DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size) 
+inline void 
+DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
 {
     Sprite Sprite = GetSprite(SpriteID);
     Transform transform = {};
@@ -72,5 +71,5 @@ inline void DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size)
     transform.AtlasOffset = Sprite.AtlasOffset;
     transform.SpriteSize = Sprite.SpriteSize;
 
-    GameRenderData->Transforms[GameRenderData->TransformCount++] = transform;
+    RenderData->Transforms[RenderData->TransformCount++] = transform;
 }
