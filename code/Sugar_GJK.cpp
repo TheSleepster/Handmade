@@ -7,7 +7,7 @@
 #include "Sugar_ECS.h"
 
 internal vec2
-AveragePoint(Collider *A) 
+AveragePoint(ColliderComponent *A) 
 {
     vec2 Average = {};
 
@@ -25,7 +25,7 @@ AveragePoint(Collider *A)
 }
 
 internal bool32
-FurthestPoint(Collider *A, vec2 Direction) 
+FurthestPoint(ColliderComponent *A, vec2 Direction) 
 { 
     int BestIndex = 0;
     real32 MaxProduct = vDot(A->Vertices[0], Direction);
@@ -45,7 +45,7 @@ FurthestPoint(Collider *A, vec2 Direction)
 }
 
 internal vec2
-GJKSupport(Collider *A, Collider *B, vec2 Direction) 
+GJKSupport(ColliderComponent *A, ColliderComponent *B, vec2 Direction) 
 {
     int AMax = FurthestPoint(A, Direction);
     int BMax = FurthestPoint(B, -Direction);
@@ -54,7 +54,7 @@ GJKSupport(Collider *A, Collider *B, vec2 Direction)
 }
 
 internal bool32
-GJK(Collider *A, Collider *B) 
+GJK(ColliderComponent *A, ColliderComponent *B) 
 { 
     vec2 Simplex[3] = {};
     vec2 Position1 = AveragePoint(A);

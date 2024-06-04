@@ -5,21 +5,27 @@
 #include "../Sugar_Intrinsics.h"
 #include "Sugar_Memory.h"
 
+#define DEFAULT_CAPACITY 16;
+
 // NOTE : This is a very naive implimentation, fix it later.
 
 struct DynamicArray
 {
-    uint32 Size;
-    uint32 Capacity;
+    uint32 CurrentSize;
+    uint32 MaxCapacity;
     void **Entries;
 };
 
 inline bool32
 ArrayInit(BumpAllocator *Memory, DynamicArray *Array, uint32 Capacity) 
 {   
-    *(uint32 *)&Array->Size = 0;
-    *(uint32 *)&Array->Capacity = Capacity;
-    
+    *(uint32 *)&Array->CurrentSize = 0;
+    *(uint32 *)&Array->MaxCapacity = Capacity;
+    if(Capacity <= 0) 
+    {
+        Capacity = DEFAULT_CAPACITY;
+    }
+
     Array->Entries = (void **)BumpAllocate(Memory, sizeof(void *)*Capacity);
     if(Array->Entries == 0) 
     {
@@ -31,21 +37,28 @@ ArrayInit(BumpAllocator *Memory, DynamicArray *Array, uint32 Capacity)
 inline bool32
 ArrayGrow(BumpAllocator *Memory, DynamicArray *Array)
 {
-    uint32 NewCapacity = Array->Capacity * 2;
-    void **NewEntries = (void **)BumpAllocate(Memory, sizeof(void *)*NewCapacity);
+    uint32 NewMaxCapacity = Array->MaxCapacity * 2;
+    void **NewEntries = (void **)BumpAllocate(Memory, sizeof(void *)*NewMaxCapacity);
     
-    Array->Entries = NewEntries;
-    *(uint32 *)&Array->Capacity = NewCapacity;
-    BumpDeallocate(Memory, (void *)NewEntries);
+    for(uint32 Index = 0;
+        Index < Array->CurrentSize;
+        ++Index) 
+    {
+        NewEntries[Index] = Array->Entries[Index];
+    }
 
+    BumpDeallocate(Memory, (char *)Array->Entries);
+
+    Array->Entries = NewEntries;
+    *(uint32 *)&Array->MaxCapacity = NewMaxCapacity;
     return(1);
 }
 
-inline void 
-ArrayAdd(BumpAllocator *Memory, DynamicArray *Array, uint32 Index, void *Element) 
+inline bool32 
+ArrayAdd(DynamicArray *Array, BumpAllocator *Memory, void *Element, uint32 Index) 
 { 
     // Move everything up one from the index
-    for(uint32 ElementIndex = Array->Size;
+    for(uint32 ElementIndex = Array->CurrentSize;
         ElementIndex > Index; 
         --ElementIndex) 
     {
@@ -53,12 +66,8 @@ ArrayAdd(BumpAllocator *Memory, DynamicArray *Array, uint32 Index, void *Element
     }
     // Assign the index
     Array->Entries[Index] = Element;
-    
-    // Grow if needed
-    if(++ *(uint32 *)&Array->Size == Array->Capacity) 
-    {
-        ArrayGrow(Memory, Array);
-    }
+    Array->CurrentSize++;
+    return(1);
 }
 
 inline const void *
@@ -71,7 +80,7 @@ inline void const *
 ArraySwap(DynamicArray *Array, uint32 Index, void *Element) 
 { 
     void const *Result = 0;
-    if(Index >= Array->Size) 
+    if(Index >= Array->CurrentSize) 
     {
         return(0);
     }
@@ -86,13 +95,13 @@ ArrayRemove(DynamicArray *Array, uint32 Index)
 { 
     const void *Result = Array->Entries[Index];
 
-    for(-- *(uint32 *)&Array->Size; 
-        Index <= Array->Size; 
+    for(-- *(uint32 *)&Array->CurrentSize; 
+        Index <= Array->CurrentSize; 
         ++Index) 
     {
         Array->Entries[Index] = Array->Entries[Index + 1];
     }
-
+    --Array->CurrentSize;
     return(Result);
 }
 

@@ -5,19 +5,19 @@
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
+#include "util/Sugar_Array.h"
 
-struct Collider 
+struct TransformComponent 
 {
-    vec2 Vertices[8];
-    int VertexCount;
+    vec2 PreviousPosition;
+    vec2 CurrentPosition;
+    vec2 PreviousVelocity;
+    vec2 CurrentVelocity;
+    vec2 Size;
 };
 
-struct RigidBody 
+struct PhysicsComponent 
 {
-    vec2 Position;
-    vec2 Velocity;
-    vec2 Size;
-
     // Restitution is an indicator of how Elastic/Inelastic the collision is.
     real32 Restitution;
     real32 Density;
@@ -25,10 +25,15 @@ struct RigidBody
     //real32 Rotation;
 };
 
-enum EntityType 
-{ 
-    DICE,
-    ENTITYTYPECOUNT
+struct ColliderComponent 
+{
+    vec2 Vertices[8];
+    int VertexCount;
+};
+
+struct SpriteComponent 
+{
+    SpriteID SpriteID;
 };
 
 enum EntityFlags 
@@ -43,18 +48,19 @@ enum EntityFlags
     IS_DEAD      = 1 << 7,
 };
 
+// MEGA STRUCT WILL HOLD EVERYTHING FOR NOW
 struct Entity 
 {
     uint32 EntityID;
     uint64 Flags;
 
-    RigidBody PhysicsBody;
-    Collider Collider;
-    SpriteID Sprite;
+    PhysicsComponent Physics;
+    TransformComponent Transform;
+    ColliderComponent Collider;
+    SpriteComponent Sprite;
 };
 
 struct GameState 
 {
-    Entity Entities[255];
+    DynamicArray Entities;
 };
-

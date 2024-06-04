@@ -376,6 +376,8 @@ WinMain(HINSTANCE hInstance,
 
         if(WindowHandle) 
         {
+            
+
             GameMemory GameMemory = {};
             GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
             GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(200));
