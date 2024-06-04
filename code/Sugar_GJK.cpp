@@ -24,7 +24,7 @@ AveragePoint(Collider *A)
     return(Average);
 }
 
-internal int 
+internal bool32
 FurthestPoint(Collider *A, vec2 Direction) 
 { 
     int BestIndex = 0;
@@ -53,7 +53,7 @@ GJKSupport(Collider *A, Collider *B, vec2 Direction)
     return(A->Vertices[AMax] - B->Vertices[BMax]);
 }
 
-internal int
+internal bool32
 GJK(Collider *A, Collider *B) 
 { 
     vec2 Simplex[3] = {};

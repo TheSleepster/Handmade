@@ -15,6 +15,8 @@
 
 #include <windows.h>
 
+// NOTE : Arena allocator
+
 struct FreeList 
 {
     struct FreeList *NextChunk;
@@ -68,7 +70,7 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
 }
 
 inline void
-BumpDealloc(BumpAllocator *BumpAllocator, void *Data) 
+BumpDeallocate(BumpAllocator *BumpAllocator, void *Data) 
 {
     FreeList *FreeList = (struct FreeList *)Data;
     FreeList->NextChunk = BumpAllocator->FreeList;

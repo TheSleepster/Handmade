@@ -12,7 +12,7 @@
 global_variable uint8 EntityIndex = 0;
 
 internal bool 
-CreateDiceEntity(vec2 Pos, vec2 Scale, GameState *State) 
+CreateDiceEntity(vec2 Pos, vec2 Scale, DynamicArray *Array, BumpAllocator *Memory) 
 {
     Entity Entity = {};
 
@@ -45,14 +45,14 @@ CreateDiceEntity(vec2 Pos, vec2 Scale, GameState *State)
     Entity.Flags |= (IS_STATIC & 1 << 2);
     Entity.Flags |= (TILE & 1 << 4);
 
-    State->Entities[EntityIndex] = Entity;
-    ++EntityIndex;
+    ArrayAdd(Memory, Array, 0, (void *)&Entity);
+
     return(1);
 }
 
 internal void
 DrawEntity(Entity *Entity) 
-{
+{ 
     DrawSprite(Entity->Sprite, Entity->PhysicsBody.Position, Entity->PhysicsBody.Size);
 }
 
