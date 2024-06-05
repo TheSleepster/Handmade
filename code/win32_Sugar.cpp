@@ -56,8 +56,8 @@ global_variable int ClientHeight = {};
 
 #define SIMRATE ((1.0f/60.0f) * 1000.0f)
 
-#ifdef SUGAR_SLOW
 
+#ifdef SUGAR_SLOW
 internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
 { 

@@ -519,7 +519,7 @@ operator/(vec3 A, real32 B)
 // FLOAT VECTOR3 FUNCTIONS
 
 internal inline vec3
-Multiplyv3real32(vec3 A, real32 B) 
+MultiplyV3Real(vec3 A, real32 B) 
 {
     vec3 Result = {};
 
@@ -610,7 +610,7 @@ m3Transpose(mat3 A)
 }
 
 internal inline vec3
-Multiplym3v3(mat3 A, vec3 B) 
+MultiplyM3V3(mat3 A, vec3 B) 
 { 
     vec3 Result = {};
 
@@ -630,18 +630,18 @@ Multiplym3v3(mat3 A, vec3 B)
 }
 
 internal inline mat3
-Multiplym3m3(mat3 A, mat3 B) 
+MultiplyM3M3(mat3 A, mat3 B) 
 {
     mat3 Result;
-    Result.Columns[0] = Multiplym3v3(A, B.Columns[0]);
-    Result.Columns[1] = Multiplym3v3(A, B.Columns[1]);
-    Result.Columns[2] = Multiplym3v3(A, B.Columns[2]);
+    Result.Columns[0] = MultiplyM3V3(A, B.Columns[0]);
+    Result.Columns[1] = MultiplyM3V3(A, B.Columns[1]);
+    Result.Columns[2] = MultiplyM3V3(A, B.Columns[2]);
 
     return(Result);
 }
 
 internal inline mat3
-Multiplym3real32(mat3 A, real32 B) 
+MultiplyM3Real(mat3 A, real32 B) 
 { 
     mat3 Result = {};
 
@@ -659,7 +659,7 @@ Multiplym3real32(mat3 A, real32 B)
 }
 
 internal inline mat3
-Dividem3real32(mat3 A, real32 B) 
+DivideM3Real(mat3 A, real32 B) 
 { 
     mat3 Result = {};
 
@@ -699,9 +699,9 @@ m3InvDeterminate(mat3 A)
     real32 InverseDeterminate = 1.0f / v3Dot(Cross.Columns[2], A.Columns[2]);
 
     mat3 Result = {};
-    Result.Columns[0] = Multiplyv3real32(Cross.Columns[0], InverseDeterminate);
-    Result.Columns[1] = Multiplyv3real32(Cross.Columns[1], InverseDeterminate);
-    Result.Columns[2] = Multiplyv3real32(Cross.Columns[2], InverseDeterminate);
+    Result.Columns[0] = MultiplyV3Real(Cross.Columns[0], InverseDeterminate);
+    Result.Columns[1] = MultiplyV3Real(Cross.Columns[1], InverseDeterminate);
+    Result.Columns[2] = MultiplyV3Real(Cross.Columns[2], InverseDeterminate);
 
     return(m3Transpose(Result));
 }
@@ -812,34 +812,6 @@ operator/(vec4 A, real32 B)
 
 // VECTOR4 FUNCTIONS
 
-internal inline vec4
-v4LinearCombine(vec4 A, mat4 B) 
-{
-    vec4 Result = {};
-
-    Result.X = Left.Elements[0] * Right.Columns[0].X;
-    Result.Y = Left.Elements[0] * Right.Columns[0].Y;
-    Result.Z = Left.Elements[0] * Right.Columns[0].Z;
-    Result.W = Left.Elements[0] * Right.Columns[0].W;
-
-    Result.X += Left.Elements[1] * Right.Columns[1].X;
-    Result.Y += Left.Elements[1] * Right.Columns[1].Y;
-    Result.Z += Left.Elements[1] * Right.Columns[1].Z;
-    Result.W += Left.Elements[1] * Right.Columns[1].W;
-
-    Result.X += Left.Elements[2] * Right.Columns[2].X;
-    Result.Y += Left.Elements[2] * Right.Columns[2].Y;
-    Result.Z += Left.Elements[2] * Right.Columns[2].Z;
-    Result.W += Left.Elements[2] * Right.Columns[2].W;
-
-    Result.X += Left.Elements[3] * Right.Columns[3].X;
-    Result.Y += Left.Elements[3] * Right.Columns[3].Y;
-    Result.Z += Left.Elements[3] * Right.Columns[3].Z;
-    Result.W += Left.Elements[3] * Right.Columns[3].W;
-
-    return(Result);
-}
-
 // 4x4 FLOAT MATRIX
 
 union mat4 
@@ -849,6 +821,34 @@ union mat4
 };
 
 // 4x4 FLOAT MATRIX OPERATORS
+
+internal inline vec4
+v4LinearCombine(vec4 A, mat4 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.Elements[0] * B.Columns[0].x;
+    Result.y = A.Elements[0] * B.Columns[0].y;
+    Result.z = A.Elements[0] * B.Columns[0].z;
+    Result.w = A.Elements[0] * B.Columns[0].w;
+
+    Result.x += A.Elements[1] * B.Columns[1].x;
+    Result.y += A.Elements[1] * B.Columns[1].y;
+    Result.z += A.Elements[1] * B.Columns[1].z;
+    Result.w += A.Elements[1] * B.Columns[1].w;
+
+    Result.x += A.Elements[2] * B.Columns[2].x;
+    Result.y += A.Elements[2] * B.Columns[2].y;
+    Result.z += A.Elements[2] * B.Columns[2].z;
+    Result.w += A.Elements[2] * B.Columns[2].w;
+
+    Result.x += A.Elements[3] * B.Columns[3].x;
+    Result.y += A.Elements[3] * B.Columns[3].y;
+    Result.z += A.Elements[3] * B.Columns[3].z;
+    Result.w += A.Elements[3] * B.Columns[3].w;
+
+    return(Result);
+}
 
 internal inline mat4
 operator+(mat4 A, mat4 B) 
@@ -903,7 +903,7 @@ m4Transpose(mat4 A)
 // TODO : Running out of "Check SIMD expensive"'s
 
 internal inline mat4
-Dividem4real32(mat4 A, real32 B) 
+DivideM4Real(mat4 A, real32 B) 
 {
     mat4 Result = {};
 
@@ -928,7 +928,7 @@ Dividem4real32(mat4 A, real32 B)
 }
 
 internal inline mat4
-Multiplym4real32(mat4 A, real32 B) 
+MultiplyM4Real(mat4 A, real32 B) 
 {
     mat4 Result = {};
 
@@ -953,7 +953,7 @@ Multiplym4real32(mat4 A, real32 B)
 }
 
 internal inline mat4 
-Multiplym4m4(mat4 A, mat4 B) 
+MultiplyM4M4(mat4 A, mat4 B) 
 {
     mat4 Result = {};
 
