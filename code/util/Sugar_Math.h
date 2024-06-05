@@ -69,6 +69,28 @@ operator*(vec2 A, real32 B)
     return(Result);
 }
 
+internal inline vec2
+operator/(vec2 A, vec2 B) 
+{
+    vec2 Result = {};
+
+    Result.x = A.x / B.x;
+    Result.y = A.y / B.y;
+
+    return(Result);
+}
+
+internal inline vec2
+operator/(vec2 A, real32 B) 
+{
+    vec2 Result = {};
+
+    Result.x = A.x / B;
+    Result.y = A.y / B;
+
+    return(Result);
+}
+
 // FLOAT OPERATIONS
 
 internal inline real32 
@@ -418,7 +440,7 @@ struct vec3
 internal inline vec3 
 operator-(vec3 A, vec3 B)
 {
-    vec2 Result = {};
+    vec3 Result = {};
     Result.x = A.x - B.x;
     Result.y = A.y - B.y;
     Result.z = A.z - B.z;
@@ -427,7 +449,7 @@ operator-(vec3 A, vec3 B)
 }
 
 internal inline vec3 
-operator-(vec2 A) 
+operator-(vec3 A) 
 {
     vec3 Result = {};
     Result.x = -A.x;
@@ -440,7 +462,7 @@ operator-(vec2 A)
 internal inline vec3
 operator+(vec3 A, vec3 B) 
 {
-    vec2 Result = {};
+    vec3 Result = {};
     Result.x = A.x + B.x;
     Result.y = A.y + B.y;
     Result.z = A.z + B.z;
@@ -460,14 +482,70 @@ operator*(vec3 A, vec3 B)
 }
 
 internal inline vec3 
-operator*(vec2 A, real32 B) 
+operator*(vec3 A, real32 B) 
 {
-    vec2 Result = {};
+    vec3 Result = {};
     Result.x = A.x * B;
     Result.y = A.y * B;
     Result.z = A.z * B;
 
     return(Result);
+}
+
+internal inline vec3 
+operator/(vec3 A, vec3 B) 
+{
+    vec3 Result = {};
+
+    Result.x = A.x / B.x;
+    Result.y = A.y / B.y;
+    Result.z = A.z / B.z;
+
+    return(Result);
+}
+
+internal inline vec3 
+operator/(vec3 A, real32 B) 
+{
+    vec3 Result = {};
+
+    Result.x = A.x / B;
+    Result.y = A.y / B;
+    Result.z = A.z / B;
+
+    return(Result);
+}
+
+// FLOAT VECTOR3 FUNCTIONS
+
+internal inline vec3
+Multiplyv3real32(vec3 A, real32 B) 
+{
+    vec3 Result = {};
+
+    Result.x = A.x * B;
+    Result.y = A.y * B;
+    Result.z = A.z * B;
+
+    return(Result);
+}
+
+internal inline vec3
+v3Cross(vec3 A, vec3 B) 
+{
+    vec3 Result = {};
+
+    Result.x = (A.y * B.z) - (A.z * B.y);
+    Result.y = (A.z * B.x) - (A.x * B.z);
+    Result.z = (A.x * B.y) - (A.y * B.x);
+
+    return(Result);
+}
+
+internal inline real32
+v3Dot(vec3 A, vec3 B) 
+{
+  return((A.x * B.x) + (A.y * B.y) + (A.z * B.z));
 }
 
 union mat3 
@@ -598,6 +676,36 @@ Dividem3real32(mat3 A, real32 B)
     return(Result);
 }
 
+internal inline real32
+m3Determinate(mat3 A) 
+{
+    mat3 Result = {};
+
+    Result.Columns[0] = v3Cross(A.Columns[1], A.Columns[2]);
+    Result.Columns[1] = v3Cross(A.Columns[2], A.Columns[0]);
+    Result.Columns[2] = v3Cross(A.Columns[0], A.Columns[1]);
+
+    return(v3Dot(Result.Columns[2], A.Columns[2]));
+}
+
+internal inline mat3 
+m3InvDeterminate(mat3 A) 
+{
+    mat3 Cross = {};
+    Cross.Columns[0] = v3Cross(A.Columns[1], A.Columns[2]);
+    Cross.Columns[1] = v3Cross(A.Columns[2], A.Columns[0]);
+    Cross.Columns[2] = v3Cross(A.Columns[0], A.Columns[1]);
+
+    real32 InverseDeterminate = 1.0f / v3Dot(Cross.Columns[2], A.Columns[2]);
+
+    mat3 Result = {};
+    Result.Columns[0] = Multiplyv3real32(Cross.Columns[0], InverseDeterminate);
+    Result.Columns[1] = Multiplyv3real32(Cross.Columns[1], InverseDeterminate);
+    Result.Columns[2] = Multiplyv3real32(Cross.Columns[2], InverseDeterminate);
+
+    return(m3Transpose(Result));
+}
+
 // FLOAT VECTOR 4
 
 union vec4 
@@ -621,11 +729,239 @@ union vec4
     };
 };
 
+// VECTOR4 OVERLOADING 
+
+// TODO : These are large and expensive calls, check SIMD or ASM functions
+internal inline vec4
+operator+(vec4 A, vec4 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.x + B.x;
+    Result.y = A.y + B.y;
+    Result.z = A.z + B.z;
+    Result.w = A.w + B.w;
+
+    return(Result);
+}
+
+internal inline vec4
+operator-(vec4 A, vec4 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.x - B.x;
+    Result.y = A.y - B.y;
+    Result.z = A.z - B.z;
+    Result.w = A.w - B.w;
+
+    return(Result);
+}
+
+internal inline vec4
+operator*(vec4 a, vec4 b) 
+{
+    vec4 result = {};
+
+    result.x = a.x * b.x;
+    result.y = a.y * b.y;
+    result.z = a.z * b.z;
+    result.w = a.w * b.w;
+
+    return(result);
+}
+
+internal inline vec4
+operator*(vec4 A, real32 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.x * B;
+    Result.y = A.y * B;
+    Result.z = A.z * B;
+    Result.w = A.w * B;
+
+    return(Result);
+}
+
+internal inline vec4
+operator/(vec4 A, vec4 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.x / B.x;
+    Result.y = A.y / B.y;
+    Result.z = A.z / B.z;
+    Result.w = A.w / B.w;
+
+    return(Result);
+}
+
+internal inline vec4
+operator/(vec4 A, real32 B) 
+{
+    vec4 Result = {};
+
+    Result.x = A.x / B;
+    Result.y = A.y / B;
+    Result.z = A.z / B;
+    Result.w = A.w / B;
+
+    return(Result);
+}
+
+// VECTOR4 FUNCTIONS
+
+internal inline vec4
+v4LinearCombine(vec4 A, mat4 B) 
+{
+    vec4 Result = {};
+
+    Result.X = Left.Elements[0] * Right.Columns[0].X;
+    Result.Y = Left.Elements[0] * Right.Columns[0].Y;
+    Result.Z = Left.Elements[0] * Right.Columns[0].Z;
+    Result.W = Left.Elements[0] * Right.Columns[0].W;
+
+    Result.X += Left.Elements[1] * Right.Columns[1].X;
+    Result.Y += Left.Elements[1] * Right.Columns[1].Y;
+    Result.Z += Left.Elements[1] * Right.Columns[1].Z;
+    Result.W += Left.Elements[1] * Right.Columns[1].W;
+
+    Result.X += Left.Elements[2] * Right.Columns[2].X;
+    Result.Y += Left.Elements[2] * Right.Columns[2].Y;
+    Result.Z += Left.Elements[2] * Right.Columns[2].Z;
+    Result.W += Left.Elements[2] * Right.Columns[2].W;
+
+    Result.X += Left.Elements[3] * Right.Columns[3].X;
+    Result.Y += Left.Elements[3] * Right.Columns[3].Y;
+    Result.Z += Left.Elements[3] * Right.Columns[3].Z;
+    Result.W += Left.Elements[3] * Right.Columns[3].W;
+
+    return(Result);
+}
+
+// 4x4 FLOAT MATRIX
+
 union mat4 
 { 
     real32 Elements[4][4];
     vec4 Columns[4];
 };
 
-// TODO : Finish 3x3 matrices
-//        4x4 matrix calcs
+// 4x4 FLOAT MATRIX OPERATORS
+
+internal inline mat4
+operator+(mat4 A, mat4 B) 
+{ 
+    mat4 Result = {};
+
+    Result.Columns[0] = A.Columns[0] + B.Columns[0]; 
+    Result.Columns[1] = A.Columns[1] + B.Columns[1]; 
+    Result.Columns[2] = A.Columns[2] + B.Columns[2]; 
+    Result.Columns[3] = A.Columns[3] + B.Columns[3]; 
+}
+
+internal inline mat4
+operator-(mat4 A, mat4 B) 
+{ 
+    mat4 Result = {};
+
+    Result.Columns[0] = A.Columns[0] - B.Columns[0]; 
+    Result.Columns[1] = A.Columns[1] - B.Columns[1]; 
+    Result.Columns[2] = A.Columns[2] - B.Columns[2]; 
+    Result.Columns[3] = A.Columns[3] - B.Columns[3]; 
+}
+
+// 4x4 FLOAT MATRIX FUNCTIONS
+
+// TODO : SIMD for this please omfg this is expensive
+internal inline mat4
+m4Transpose(mat4 A) 
+{ 
+    mat4 Result = {};
+
+    Result.Elements[0][0] = A.Elements[0][0];
+    Result.Elements[0][1] = A.Elements[1][0];
+    Result.Elements[0][2] = A.Elements[2][0];
+    Result.Elements[0][3] = A.Elements[3][0];
+    Result.Elements[1][0] = A.Elements[0][1];
+    Result.Elements[1][1] = A.Elements[1][1];
+    Result.Elements[1][2] = A.Elements[2][1];
+    Result.Elements[1][3] = A.Elements[3][1];
+    Result.Elements[2][0] = A.Elements[0][2];
+    Result.Elements[2][1] = A.Elements[1][2];
+    Result.Elements[2][2] = A.Elements[2][2];
+    Result.Elements[2][3] = A.Elements[3][2];
+    Result.Elements[3][0] = A.Elements[0][3];
+    Result.Elements[3][1] = A.Elements[1][3];
+    Result.Elements[3][2] = A.Elements[2][3];
+    Result.Elements[3][3] = A.Elements[3][3];
+
+    return(Result);
+}
+
+// TODO : Running out of "Check SIMD expensive"'s
+
+internal inline mat4
+Dividem4real32(mat4 A, real32 B) 
+{
+    mat4 Result = {};
+
+    Result.Elements[0][0] = A.Elements[0][0] / B;
+    Result.Elements[0][1] = A.Elements[0][1] / B;
+    Result.Elements[0][2] = A.Elements[0][2] / B;
+    Result.Elements[0][3] = A.Elements[0][3] / B;
+    Result.Elements[1][0] = A.Elements[1][0] / B;
+    Result.Elements[1][1] = A.Elements[1][1] / B;
+    Result.Elements[1][2] = A.Elements[1][2] / B;
+    Result.Elements[1][3] = A.Elements[1][3] / B;
+    Result.Elements[2][0] = A.Elements[2][0] / B;
+    Result.Elements[2][1] = A.Elements[2][1] / B;
+    Result.Elements[2][2] = A.Elements[2][2] / B;
+    Result.Elements[2][3] = A.Elements[2][3] / B;
+    Result.Elements[3][0] = A.Elements[3][0] / B;
+    Result.Elements[3][1] = A.Elements[3][1] / B;
+    Result.Elements[3][2] = A.Elements[3][2] / B;
+    Result.Elements[3][3] = A.Elements[3][3] / B;
+
+    return(Result);
+}
+
+internal inline mat4
+Multiplym4real32(mat4 A, real32 B) 
+{
+    mat4 Result = {};
+
+    Result.Elements[0][0] = A.Elements[0][0] * B;
+    Result.Elements[0][1] = A.Elements[0][1] * B;
+    Result.Elements[0][2] = A.Elements[0][2] * B;
+    Result.Elements[0][3] = A.Elements[0][3] * B;
+    Result.Elements[1][0] = A.Elements[1][0] * B;
+    Result.Elements[1][1] = A.Elements[1][1] * B;
+    Result.Elements[1][2] = A.Elements[1][2] * B;
+    Result.Elements[1][3] = A.Elements[1][3] * B;
+    Result.Elements[2][0] = A.Elements[2][0] * B;
+    Result.Elements[2][1] = A.Elements[2][1] * B;
+    Result.Elements[2][2] = A.Elements[2][2] * B;
+    Result.Elements[2][3] = A.Elements[2][3] * B;
+    Result.Elements[3][0] = A.Elements[3][0] * B;
+    Result.Elements[3][1] = A.Elements[3][1] * B;
+    Result.Elements[3][2] = A.Elements[3][2] * B;
+    Result.Elements[3][3] = A.Elements[3][3] * B;
+
+    return(Result);
+}
+
+internal inline mat4 
+Multiplym4m4(mat4 A, mat4 B) 
+{
+    mat4 Result = {};
+
+    Result.Columns[0] = v4LinearCombine(B.Columns[0], A); 
+    Result.Columns[1] = v4LinearCombine(B.Columns[1], A); 
+    Result.Columns[2] = v4LinearCombine(B.Columns[2], A); 
+    Result.Columns[3] = v4LinearCombine(B.Columns[3], A); 
+
+    return(Result);
+}
+// TODO : Finish all of the 4x4 matrix calcs
