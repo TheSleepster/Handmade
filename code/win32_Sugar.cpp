@@ -32,6 +32,7 @@
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "Sugar_Input.h"
+#include "Sugar_ECS.h"
 
 #define NOMINMAX
 #include <windows.h>
@@ -385,22 +386,28 @@ WinMain(HINSTANCE hInstance,
             GameState.GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
             GameState.GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(1000));
             GameState.KeyCodeLookup[KEY_COUNT] = {};
+            GameState.IsInitialized = 0;
             
             GameState.RenderData = (RenderData *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(RenderData));
-            Assert(GameState.RenderData, "Failed to allocate Permanent Memory for the GameRenderData Variable!\n");
             if(!GameState.RenderData) 
             {
                 MessageBoxA(WindowHandle, "Failed to set the Allocate memory!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
+            
+            GameState.Entities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
+            if(!GameState.Entities) 
+            {
+                MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
+            }
 
+            // INITIALIZE
+            char *SourceDLLName = "GameCode.dll";
             InitializeOpenGLRenderer(&GameState);
             Win32LoadKeyData(&GameState); 
-
-            char *SourceDLLName = "GameCode.dll";
             Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
+            GlobalRunning = true;
 
             WindowData.WindowDC = GetDC(WindowHandle);
-            GlobalRunning = true;
 
             LARGE_INTEGER LastCounter;            
             QueryPerformanceCounter(&LastCounter);
@@ -426,18 +433,21 @@ WinMain(HINSTANCE hInstance,
             }
 
             real32 SimulationDelta = {};
-            real32 SimDeltaTime = {};
-
-            Game.InitData(&GameState);
-
             while(GlobalRunning) 
             {
+#ifdef SUGAR_SLOW
                 // HOTRELOADING
                 FILETIME NewDLLWriteTime = Win32GetLastWriteTime(SourceDLLName);
                 if(CompareFileTime(&NewDLLWriteTime, &Game.DLLLastWriteTime) != 0) 
                 {
                     Win32UnloadGamecode(&Game);
                     Game = Win32LoadGamecode(SourceDLLName);
+                    GameState.IsInitialized = 0;
+                }
+#endif
+                if(!GameState.IsInitialized) 
+                {
+                    Game.InitData(&GameState);
                 }
 
                 MSG Message = {};
@@ -447,7 +457,10 @@ WinMain(HINSTANCE hInstance,
                 // TODO : Determine whether or not it's a mistake to use "ms" for the unit
                 if(SimulationDelta >= SIMRATE) 
                 {
-                    SimulationDelta -= SimDeltaTime;
+                    if(SimulationDelta >= (SIMRATE*2)) 
+                    {
+                        SimulationDelta = SIMRATE;
+                    }
 
                     // MESSAGES
                     Win32ProcessInputMessages(Message, WindowHandle, &GameInput, &GameState);
@@ -518,21 +531,21 @@ WinMain(HINSTANCE hInstance,
 
                 // RESET MEMORY
                 BumpReset(&GameState.GameMemory.TransientStorage);
+
                 // DELTA TIME
                 LARGE_INTEGER EndCounter;
                 QueryPerformanceCounter(&EndCounter);
                 int64 DeltaCounter = EndCounter.QuadPart - LastCounter.QuadPart;    
                 real32 MSPerFrame = (1000 * (real32)DeltaCounter) / (real32)PerfCountFrequency;
                 int32 FPS = (int32)PerfCountFrequency / (int32)DeltaCounter;
+
                 SimulationDelta += MSPerFrame;       // DELTA TIME
+                LastCounter = EndCounter;
 
                 // PERFORMANCE PROFILING
                 char Buffer[256];
                 sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
                 OutputDebugStringA(Buffer);
-                LastCounter = EndCounter;
-
-                SimulationDelta += MSPerFrame;
             }
         }
         else 

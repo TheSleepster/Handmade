@@ -28,13 +28,13 @@ internal bool32
 FurthestPoint(ColliderComponent *A, vec2 Direction) 
 { 
     int BestIndex = 0;
-    real32 MaxProduct = vDot(A->Vertices[0], Direction);
+    real32 MaxProduct = v2Dot(A->Vertices[0], Direction);
     vec2 Result = {};
     for(int Point = 1; 
         Point < A->VertexCount; 
         ++Point) 
     { 
-        real32 Product = vDot(A->Vertices[Point], Direction); 
+        real32 Product = v2Dot(A->Vertices[Point], Direction); 
         if(Product > MaxProduct) 
         {
             MaxProduct = Product;
@@ -78,35 +78,35 @@ GJK(ColliderComponent *A, ColliderComponent *B)
 
     // Set the First Support as the new point of the Simplex
     Simplex[0] = GJKSupport(A, B, Direction);
-    if(vDot(Simplex[0], Direction) <= 0) 
+    if(v2Dot(Simplex[0], Direction) <= 0) 
     {
         return(0);
         // Collision not possible
     }
 
     // Invert the vector so the next search direction is flipped towards the origin
-    Direction = vInverse(Direction);
+    Direction = v2Inverse(Direction);
 
     int Index = 0;
     for(;;) 
     {
         RegionA = Simplex[++Index] = GJKSupport(A, B, Direction);
-        if(vDot(RegionA, Direction) <= 0) 
+        if(v2Dot(RegionA, Direction) <= 0) 
         {
             return(0);
             // Collision not possible
         }
 
-        AO = vInverse(RegionA); // From point A to Origin is likely just negative A
+        AO = v2Inverse(RegionA); // From point A to Origin is likely just negative A
         // Simplex has 2 points, it is not a triangle yet.
         if(Index < 2) 
         {
             RegionB = Simplex[0];
             AB = RegionB - RegionA;
-            Direction = TripleProduct(AB, AO, AB);
-            if(vLengthSq(Direction) == 0) 
+            Direction = v2TripleProduct(AB, AO, AB);
+            if(v2LengthSq(Direction) == 0) 
             {
-                Direction = Perpendicular(AB);
+                Direction = v2Perpendicular(AB);
             }
             continue;
         } 
@@ -117,15 +117,15 @@ GJK(ColliderComponent *A, ColliderComponent *B)
         AB = RegionB - RegionA; // Normal from AB to the origin
         AC = RegionC - RegionA;
             
-        ACPerp = TripleProduct(AB, AC, AC);
-        if(vDot(ACPerp, AO) >= 0) 
+        ACPerp = v2TripleProduct(AB, AC, AC);
+        if(v2Dot(ACPerp, AO) >= 0) 
         { 
             Direction = ACPerp;
         }
         else 
         {
-            ABPerp = TripleProduct(AC, AB, AB);
-            if(vDot(ABPerp, AO) < 0) 
+            ABPerp = v2TripleProduct(AC, AB, AB);
+            if(v2Dot(ABPerp, AO) < 0) 
             {
                 return(1);
                 //Collision

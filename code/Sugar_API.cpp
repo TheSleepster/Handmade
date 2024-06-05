@@ -4,32 +4,22 @@
 #include "win32_Sugar.h"
 #include "Sugar.h"
 #include "SugarAPI.h"
-
 #include "Sugar_ECS.h"
 
-internal void 
-DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
-{
-    Sprite Sprite = GetSprite(SpriteID);
-    Transform transform = {};
-    transform.Position = Pos;
-    transform.Size = Size;
-    transform.AtlasOffset = Sprite.AtlasOffset;
-    transform.SpriteSize = Sprite.SpriteSize;
+#define s_Size(Array, Type) (sizeof(Array) / sizeof(Type))
 
-    RenderData->Transforms[RenderData->TransformCount++] = transform;
-}
+// NOTE :
+// Perhaps a better idea for dynamic arrays is too not have them at all,
+// and Instead when we want to add an entity, simply check if it's index is nullptr then overwrite it.
+// then have an iterator that's checking to see if the entity is alive. If it's dead, set it to nullptr.
 
-// TODO : Allow users to pass in the type of Collider/Flags.
-//        Perhaps make helper functions for generic Archetypes? (Dice, Player, Enemy, Wall, etc.)
-internal bool 
-CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, DynamicArray *Array, BumpAllocator *Memory) 
-{
+internal void
+CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, uint16 Index, Entity *Array) 
+{ 
     Entity Entity = {};
 
     Entity.Sprite.SpriteID = SpriteID;
     Entity.Transform.Size = Size;
-    Entity.EntityID = Array->CurrentSize;
 
     Entity.Transform.CurrentPosition = Pos;
     Entity.Transform.Size = Size;
@@ -56,24 +46,58 @@ CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, DynamicArray *Array, BumpAl
     Entity.Flags |= (IS_STATIC & 1 << 2);
     Entity.Flags |= (TILE & 1 << 4);
 
-    if(!ArrayAdd(Array, Memory, (void *)&Entity, Entity.EntityID)) 
-    {
-        ArrayGrow(Memory, Array);
-        ArrayAdd(Array, Memory, (void *)&Entity, Entity.EntityID);
-    }
-
-    return(1);
+    Array[Index] = Entity;
 }
 
 internal void
-KillEntity(GameState *State, uint32 Index) 
+CreateTile() 
 {
-    ArrayRemove(&State->Entities, Index);
+}
+
+internal Sprite 
+GetSprite(SpriteID SpriteID) 
+{
+    Sprite Sprite = {};
+    switch(SpriteID) 
+    {
+        case SPRITE_DICE: 
+        {
+            Sprite.AtlasOffset = {0, 0};
+            Sprite.SpriteSize = {16, 16};
+        }break;
+        case SPRITE_BLUE: 
+        {
+            Sprite.AtlasOffset = {16, 0};
+            Sprite.SpriteSize = {16, 16};
+        }
+    }
+    return(Sprite);
+}
+
+internal void 
+DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
+{
+    Sprite Sprite = GetSprite(SpriteID);
+    Transform transform = {};
+    transform.Position = Pos;
+    transform.Size = Size;
+    transform.AtlasOffset = Sprite.AtlasOffset;
+    transform.SpriteSize = Sprite.SpriteSize;
+
+    RenderData->Transforms[RenderData->TransformCount++] = transform;
 }
 
 internal void 
 DrawEntity(GameState *State, uint32 Index) 
 {
-    Entity *IndexEntity = (Entity *)ArrayGetElement(&State->Entities, Index);
-    DrawSprite(IndexEntity->Sprite.SpriteID, IndexEntity->Transform.CurrentPosition, IndexEntity->Transform.Size, State->RenderData);
+    DrawSprite(State->Entities[Index].Sprite.SpriteID, 
+               State->Entities[Index].Transform.CurrentPosition, 
+               State->Entities[Index].Transform.Size, 
+               State->RenderData);
+}
+
+internal void
+DestroyEntity(GameState *State, uint32 Index) 
+{
+    State->Entities[Index] = {};
 }

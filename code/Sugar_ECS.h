@@ -36,6 +36,11 @@ struct SpriteComponent
     SpriteID SpriteID;
 };
 
+struct NeighborComponent 
+{ 
+    BYTE NeighborCount;
+};
+
 enum EntityFlags 
 {
     ACTIVE       = 1 << 0,
@@ -51,7 +56,6 @@ enum EntityFlags
 // MEGA STRUCT WILL HOLD EVERYTHING FOR NOW
 struct Entity 
 {
-    uint32 EntityID;
     uint64 Flags;
 
     PhysicsComponent Physics;
@@ -59,3 +63,24 @@ struct Entity
     ColliderComponent Collider;
     SpriteComponent Sprite;
 };
+
+#if 0
+// Things like animation components, storages ect.
+
+struct Tiles : Entity 
+{
+    NeighborComponent NeighborCount; 
+};
+
+struct Player : Entity 
+{ 
+};
+
+struct Enemy : Entity
+{
+};
+
+struct Boss : Entity 
+{
+};
+#endif 

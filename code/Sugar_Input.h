@@ -163,9 +163,9 @@ IsKeyDown(KeyCodeID KeyCode, Input *GameInput)
     Key Key = GameInput->Keyboard.Keys[KeyCode];
     if(Key.IsDown) 
     {
-        return(true);
+        return(1);
     }
-    return(false);
+    return(0);
 }
 
 inline bool
@@ -175,21 +175,21 @@ IsGameKeyDown(KeyBindings InputType, Input *GameInput)
     Key Key = GameInput->Keyboard.Keys[Keycode];
     if(Key.IsDown) 
     {
-        return(true);
+        return(0);
     }
-    return(false);
+    return(1);
 }
 
 #define XINPUT_SET_STATE(name) DWORD name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
 typedef XINPUT_SET_STATE(xinput_set_state);
 XINPUT_SET_STATE(XInputSetStateStub) 
 {
-    return(true);
+    return(1);
 }
 
 #define XINPUT_GET_STATE(name) DWORD name(DWORD dwUserIndex, XINPUT_STATE *pState)
 typedef XINPUT_GET_STATE(xinput_get_state);
 XINPUT_GET_STATE(XInputGetStateStub) 
 {
-    return(true);
+    return(0);
 }

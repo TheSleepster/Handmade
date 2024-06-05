@@ -33,6 +33,7 @@ struct GameState
 {
     // MEMORY
     GameMemory GameMemory;
+    bool IsInitialized;
 
     // FUNCTIONAL COMPONENTS
     KeyCodeID KeyCodeLookup[KEY_COUNT];
@@ -40,7 +41,7 @@ struct GameState
     RenderData *RenderData;
 
     // GAME DATA
-    DynamicArray Entities;
+    Entity *Entities;     
 };
 
 #define GAME_UPDATE_AND_RENDER(name) void name(GameState *State, Input *GameInput)

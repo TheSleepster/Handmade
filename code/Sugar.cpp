@@ -18,10 +18,11 @@ INIT_GAME_DATA(InitGameData)
 extern "C" 
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
-    ArrayInit(&State->GameMemory.PermanentStorage, &State->Entities, 10);
+    CreateEntity(SPRITE_DICE, {200, 300}, {300, 300}, 0, State->Entities);
+    CreateEntity(SPRITE_DICE, {700, 400}, {100, 100}, 1, State->Entities);
+    CreateEntity(SPRITE_DICE, {600, 100}, {50, 50}, 2, State->Entities);
 
-    // NOTE : Add renderData and the game's memory to gamestate
-    CreateEntity(SPRITE_DICE, {150, 200}, {300, 300}, &State->Entities, &State->GameMemory.PermanentStorage);
     DrawEntity(State, 0);
-    KillEntity(State, 0);
-} 
+    DrawEntity(State, 1);
+    DrawEntity(State, 2);
+}
