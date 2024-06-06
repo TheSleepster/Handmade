@@ -426,6 +426,35 @@ v2Cast(ivec2 A)
     return(Result);
 }
 
+internal inline vec2
+MultiplyIV2Real(ivec2 A, vec2 B) 
+{
+    vec2 Result = {};
+    vec2 Cast = v2Cast(A);
+
+    Result.x = Cast.x * B.x;
+    Result.y = Cast.y * B.y;
+
+    return(Result);
+}
+
+internal inline ivec2 
+iv2Cast(ivec2 A) 
+{
+    ivec2 Result = {};
+
+    Result.x = int32(A.x);
+    Result.y = int32(A.y);
+
+    return(Result);
+}
+
+internal inline vec2
+v2Convert(ivec2 A) 
+{
+    return(vec2{real32(A.x), real32(A.y)});
+}
+
 // FLOAT VECTOR 3
 
 struct vec3 
@@ -818,6 +847,29 @@ union mat4
 { 
     real32 Elements[4][4];
     vec4 Columns[4];
+
+    struct 
+    { 
+        real32 Ax;
+        real32 Ay;
+        real32 Az;
+        real32 Aw;
+
+        real32 Bx;
+        real32 By;
+        real32 Bz; 
+        real32 Bw;
+
+        real32 Cx;
+        real32 Cy;
+        real32 Cz;
+        real32 Cw;
+        
+        real32 Dx;
+        real32 Dy;
+        real32 Dz;
+        real32 Dw;
+    };
 };
 
 // 4x4 FLOAT MATRIX OPERATORS

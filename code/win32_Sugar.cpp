@@ -81,11 +81,11 @@ Win32LoadGamecode(char *SourceDLLName)
         Result.InitData = 
             (init_game_data *)GetProcAddress(Result.GameCodeDLL, "InitGameData");
 
-        Result.IsValid = (Result.UpdateAndRender);
+        Result.IsValid = (Result.UpdateAndRender && Result.InitData);
     }
     if(!Result.IsValid) 
     {
-        Result.UpdateAndRender= GameUpdateAndRenderStub;
+        Result.UpdateAndRender = GameUpdateAndRenderStub;
         Result.InitData = InitGameDataStub;
     }
     Sleep(100);
@@ -543,9 +543,6 @@ WinMain(HINSTANCE hInstance,
                 LastCounter = EndCounter;
 
                 // PERFORMANCE PROFILING
-                char Buffer[256];
-                sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
-                OutputDebugStringA(Buffer);
             }
         }
         else 

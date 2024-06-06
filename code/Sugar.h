@@ -20,6 +20,7 @@ struct glContext
     GLuint TextureID;
     GLuint TransformSBOID;
     GLuint ScreenSizeID;
+    GLuint ProjectionMatrixID;
     
     const char *VertexShaderFilepath;
     const char *FragmentShaderFilepath;

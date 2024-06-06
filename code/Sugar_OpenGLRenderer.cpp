@@ -7,6 +7,7 @@
 #include "../data/deps/stbimage/stb_image.h"
 #include "../data/deps/OpenGL/GLL.h"
 
+
 // TODO : Make these "GetLastWriteTime" functions platform agnostic
 
 internal void
@@ -93,8 +94,20 @@ OpenGLRender(GameState *State, Win32_WindowData *WindowData)
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, WindowData->WindowWidth, WindowData->WindowHeight);
 
+    // SCREEN SIZE UNIFORM
     vec2 ScreenSize = {(real32)WindowData->WindowWidth, (real32)WindowData->WindowHeight};
     glUniform2fv(State->glContext.ScreenSizeID, 1, &ScreenSize.x);
+
+    // PROJECTION MATRIX UNIFORM
+    // 320 / 180
+    State->RenderData->PlayerCamera.ProjectionMatrix = 
+        CreateOrthographicMatrix(State->RenderData->PlayerCamera.Position.x - State->RenderData->PlayerCamera.Viewport.x,
+                                 State->RenderData->PlayerCamera.Position.x + State->RenderData->PlayerCamera.Viewport.x,
+                                 State->RenderData->PlayerCamera.Position.y - State->RenderData->PlayerCamera.Viewport.y,
+                                 State->RenderData->PlayerCamera.Position.y + State->RenderData->PlayerCamera.Viewport.y);
+
+    glUniformMatrix4fv
+        (State->glContext.ProjectionMatrixID, 1, GL_FALSE, (const GLfloat *)&State->RenderData->PlayerCamera.ProjectionMatrix.Elements[0][0]);
 
     glBufferSubData
         (GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * State->RenderData->TransformCount, State->RenderData->Transforms);
@@ -202,7 +215,13 @@ InitializeOpenGLRenderer(GameState *State)
 
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Transform) * MAX_TRANSFORMS, 
             State->RenderData->Transforms, GL_DYNAMIC_DRAW);
-    State->glContext.ScreenSizeID = glGetUniformLocation(State->glContext.ProgramID, "ScreenSize");
+
+    // UNIFORM IDs
+    State->glContext.ScreenSizeID = 
+        glGetUniformLocation(State->glContext.ProgramID, "ScreenSize");
+
+    State->glContext.ProjectionMatrixID = 
+        glGetUniformLocation(State->glContext.ProgramID, "ProjectionMatrix");
 
     glEnable(GL_FRAMEBUFFER_SRGB);
     glDisable(0x809D); // Disable multisampling

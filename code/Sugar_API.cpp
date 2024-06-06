@@ -49,11 +49,6 @@ CreateEntity(SpriteID SpriteID, vec2 Pos, vec2 Size, uint16 Index, Entity *Array
     Array[Index] = Entity;
 }
 
-internal void
-CreateTile() 
-{
-}
-
 internal Sprite 
 GetSprite(SpriteID SpriteID) 
 {
@@ -75,12 +70,12 @@ GetSprite(SpriteID SpriteID)
 }
 
 internal void 
-DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Size, RenderData *RenderData) 
+DrawSprite(SpriteID SpriteID, vec2 Pos, vec2 Scale, RenderData *RenderData) 
 {
     Sprite Sprite = GetSprite(SpriteID);
     Transform transform = {};
-    transform.Position = Pos;
-    transform.Size = Size;
+    transform.Position = Pos - (v2Convert(Sprite.SpriteSize) / 2);
+    transform.Size = v2Convert(Sprite.SpriteSize) * Scale;
     transform.AtlasOffset = Sprite.AtlasOffset;
     transform.SpriteSize = Sprite.SpriteSize;
 
