@@ -64,7 +64,6 @@ struct Entity
     SpriteComponent Sprite;
 };
 
-#if 0
 // Things like animation components, storages ect.
 
 struct Tiles : Entity 
@@ -72,6 +71,7 @@ struct Tiles : Entity
     NeighborComponent NeighborCount; 
 };
 
+#if 0
 struct Player : Entity 
 { 
 };

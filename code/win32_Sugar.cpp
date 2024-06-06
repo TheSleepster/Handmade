@@ -543,6 +543,9 @@ WinMain(HINSTANCE hInstance,
                 LastCounter = EndCounter;
 
                 // PERFORMANCE PROFILING
+                char Buffer[256];
+                sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);
+                OutputDebugStringA(Buffer);
             }
         }
         else 

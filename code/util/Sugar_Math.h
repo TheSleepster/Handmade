@@ -847,29 +847,6 @@ union mat4
 { 
     real32 Elements[4][4];
     vec4 Columns[4];
-
-    struct 
-    { 
-        real32 Ax;
-        real32 Ay;
-        real32 Az;
-        real32 Aw;
-
-        real32 Bx;
-        real32 By;
-        real32 Bz; 
-        real32 Bw;
-
-        real32 Cx;
-        real32 Cy;
-        real32 Cz;
-        real32 Cw;
-        
-        real32 Dx;
-        real32 Dy;
-        real32 Dz;
-        real32 Dw;
-    };
 };
 
 // 4x4 FLOAT MATRIX OPERATORS

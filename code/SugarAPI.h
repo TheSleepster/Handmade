@@ -50,19 +50,19 @@ struct Sprite
 };
 
 internal inline mat4
-CreateOrthographicMatrix(real32 Top, real32 Bottom, real32 Left, real32 Right) 
+CreateOrthographicMatrix(real32 Left, real32 Right, real32 Top, real32 Bottom) 
 {
     mat4 Result = {};
 
-    Result.Aw = -(Right + Left) / (Right - Left);
-    Result.Bw = -(Top + Bottom) / (Top - Bottom);
-    Result.Cw = 0.0f;
+    Result.Elements[3][0] = -(Right + Left) / (Right - Left);
+    Result.Elements[3][1] = (Top + Bottom) / (Top - Bottom);
+    Result.Elements[3][2] = 0.0f;
+    Result.Elements[3][3] =  1.0f;
     
     // TODO : Make this not 6.0 / whatever. It's just like this for now because it's squished
     Result.Elements[0][0] =  2.0f / (Right - Left);
-    Result.Elements[1][1] =  7.5f / (Top - Bottom);
+    Result.Elements[1][1] =  2.0f / (Top - Bottom);
     Result.Elements[2][2] =  1.0f / (1.0f - 0.0f);
-    Result.Elements[3][3] =  1.0f;
 
     return(Result);
 }

@@ -22,7 +22,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
 {
     State->RenderData->PlayerCamera.Viewport = {WORLD_WIDTH, WORLD_HEIGHT};
     State->RenderData->PlayerCamera.Position = {0, 0};
-    CreateEntity(SPRITE_DICE, {-175, 0}, {2.0f, 2.0f}, 0, State->Entities);
+    CreateEntity(SPRITE_DICE, {0, 0}, {1.0f, 1.0f}, 0, State->Entities);
 
     DrawEntity(State, 0);
 }
