@@ -308,7 +308,7 @@ WinMain(HINSTANCE hInstance,
         WindowData.X = 100;
         WindowData.Y = 100;
         WindowData.WindowWidth = 1280;
-        WindowData.WindowHeight = 640;
+        WindowData.WindowHeight = 720;
 
         // NOTE : This Initializes OpenGL so we can make the next context
         Win32InitializeOpenGL(hInstance, Window, &Win32OpenGL);
@@ -394,8 +394,13 @@ WinMain(HINSTANCE hInstance,
                 MessageBoxA(WindowHandle, "Failed to set the Allocate memory!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
             
-            GameState.Entities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
-            if(!GameState.Entities) 
+            GameState.HighEntities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
+            if(!GameState.HighEntities) 
+            {
+                MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
+            }
+            GameState.LowEntities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
+            if(!GameState.LowEntities) 
             {
                 MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
             }

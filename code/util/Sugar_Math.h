@@ -439,7 +439,7 @@ MultiplyIV2Real(ivec2 A, vec2 B)
 }
 
 internal inline ivec2 
-iv2Cast(ivec2 A) 
+iv2Cast(vec2 A) 
 {
     ivec2 Result = {};
 

@@ -15,7 +15,6 @@ layout(std430, Binding = 0) buffer TransformSBO
 };
 
 uniform vec2 ScreenSize;
-uniform mat4 ProjectionMatrix;
 
 // Output
 layout(location = 0) out vec2 TextureCoordsOut;

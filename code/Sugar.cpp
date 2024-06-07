@@ -9,9 +9,6 @@
 #include "Sugar_GJK.cpp"
 #include "Sugar_API.cpp"
 
-#define WORLD_WIDTH 320
-#define WORLD_HEIGHT 180
-
 extern "C" 
 INIT_GAME_DATA(InitGameData)
 {
@@ -21,8 +18,8 @@ extern "C"
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
     State->RenderData->PlayerCamera.Viewport = {WORLD_WIDTH, WORLD_HEIGHT};
-    State->RenderData->PlayerCamera.Position = {0, 0};
-    CreateEntity(SPRITE_DICE, {0, 0}, {1.0f, 1.0f}, 0, State->Entities);
-
+    State->RenderData->PlayerCamera.Position = {160, -90};
+    
+    CreateEntity(SPRITE_DICE, {160, 90}, {1.0f, 1.0f}, 0, State->HighEntities);
     DrawEntity(State, 0);
 }
