@@ -5,7 +5,7 @@
 #include "util/Sugar_Math.h"
 
 // RENDER DATA
-#define MAX_TRANSFORMS 1000
+#define MAX_TRANSFORMS 10000
 #define MAX_ENTITIES 1000
 
 struct Transform
@@ -33,20 +33,7 @@ struct RenderData
     
     OrthographicCamera PlayerCamera;
     OrthographicCamera UICamera;
-};
-
-// API STUFF
-enum SpriteID 
-{
-    SPRITE_DICE,
-    SPRITE_TILE,
-    SPRITE_COUNT
-};
-
-struct Sprite
-{
-    ivec2 AtlasOffset;
-    ivec2 SpriteSize;
+    OrthographicCamera EditorCamera;
 };
 
 internal inline mat4

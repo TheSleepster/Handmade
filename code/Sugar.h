@@ -10,7 +10,7 @@
 #define WORLD_HEIGHT 90
 
 constexpr int TILE_SIZE = 16;
-constexpr ivec2 WORLD_GRID = {WORLD_WIDTH, WORLD_HEIGHT};
+constexpr ivec2 WORLD_GRID = {WORLD_WIDTH / 2, WORLD_HEIGHT / 2};
 
 struct GameMemory 
 {
@@ -42,6 +42,12 @@ struct SimulationRegion
     struct SimulationRegion *NextRegion;
 };
 
+struct Level
+{
+    Entity Tilemap[WORLD_GRID.x][WORLD_GRID.y];
+    bool Active;
+};
+
 struct GameState 
 {
     // MEMORY
@@ -59,8 +65,13 @@ struct GameState
     Entity Player;
     
     // MAP DATA
-    Entity *Tilemap;
+    Level *Level;
     SimulationRegion *SimRegion;
+    
+    // CAMERA MODE
+    bool PlayerCamera;
+    bool UICamera;
+    bool EditorCamera;
 };
 
 #define GAME_UPDATE_AND_RENDER(name) void name(GameState *State, Input *GameInput)

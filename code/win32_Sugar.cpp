@@ -62,10 +62,10 @@ internal Win32GameCode
 Win32LoadGamecode(char *SourceDLLName) 
 { 
     Win32GameCode Result = {};
-
+    
     char *TempDLLName = "GamecodeTemp.dll";
     Result.DLLLastWriteTime = Win32GetLastWriteTime(SourceDLLName);
-
+    
     Result.IsLoaded = false;
     while(!Result.IsLoaded) 
     {
@@ -73,14 +73,14 @@ Win32LoadGamecode(char *SourceDLLName)
         Result.IsLoaded = true;
     }
     Result.GameCodeDLL = LoadLibraryA(TempDLLName);
-
+    
     if(Result.GameCodeDLL) 
     {
         Result.UpdateAndRender = 
-            (game_update_and_render *)GetProcAddress(Result.GameCodeDLL, "GameUpdateAndRender"); 
+        (game_update_and_render *)GetProcAddress(Result.GameCodeDLL, "GameUpdateAndRender"); 
         Result.InitData = 
-            (init_game_data *)GetProcAddress(Result.GameCodeDLL, "InitGameData");
-
+        (init_game_data *)GetProcAddress(Result.GameCodeDLL, "InitGameData");
+        
         Result.IsValid = (Result.UpdateAndRender && Result.InitData);
     }
     if(!Result.IsValid) 
@@ -113,13 +113,13 @@ Win32LoadXInput(char *Filename)
 {
     XInputPointers Result = {};
     Result.XInputDLL = LoadLibraryA(Filename);
-
+    
     if(Result.XInputDLL) 
     {
         Result.GetState = 
-            (xinput_get_state *)GetProcAddress(Result.XInputDLL, "XInputGetState");
+        (xinput_get_state *)GetProcAddress(Result.XInputDLL, "XInputGetState");
         Result.SetState = 
-            (xinput_set_state *)GetProcAddress(Result.XInputDLL, "XInputSetState");
+        (xinput_set_state *)GetProcAddress(Result.XInputDLL, "XInputSetState");
     }
     else 
     {
@@ -166,18 +166,18 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
 {
     HWND WindowHandle = 
         CreateWindow(Window.lpszClassName,
-                "Sugar",
-                WS_OVERLAPPEDWINDOW,
-                CW_USEDEFAULT,
-                CW_USEDEFAULT,
-                CW_USEDEFAULT,
-                CW_USEDEFAULT,
-                0,
-                0,
-                hInstance,
-                0);
+                     "Sugar",
+                     WS_OVERLAPPEDWINDOW,
+                     CW_USEDEFAULT,
+                     CW_USEDEFAULT,
+                     CW_USEDEFAULT,
+                     CW_USEDEFAULT,
+                     0,
+                     0,
+                     hInstance,
+                     0);
     HDC WindowDC = GetDC(WindowHandle);
-
+    
     PIXELFORMATDESCRIPTOR DesiredPixelFormat = {};
     DesiredPixelFormat.nSize = sizeof(DesiredPixelFormat);
     DesiredPixelFormat.nVersion = 1;
@@ -191,25 +191,25 @@ Win32InitializeOpenGL(HINSTANCE hInstance, WNDCLASS Window, Win32OpenGLFunctions
     PIXELFORMATDESCRIPTOR SuggestedPixelFormat;
     DescribePixelFormat(WindowDC, PixelFormat, sizeof(SuggestedPixelFormat), &SuggestedPixelFormat);
     SetPixelFormat(WindowDC, PixelFormat, &SuggestedPixelFormat);
-
+    
     HGLRC TempRC = wglCreateContext(WindowDC);
     wglMakeCurrent(WindowDC, TempRC);
-
-// NOTE : Loading wgl specific OpenGL functions
+    
+    // NOTE : Loading wgl specific OpenGL functions
     Win32OpenGL->wglChoosePixelFormatARB = 
-        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
     Win32OpenGL->wglCreateContextAttribsARB = 
-        (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+    (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
     Win32OpenGL->wglSwapIntervalEXT =
-        (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-
+    (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+    
     if(!Win32OpenGL->wglCreateContextAttribsARB||
        !Win32OpenGL->wglChoosePixelFormatARB||
        !Win32OpenGL->wglSwapIntervalEXT) 
     {
         MessageBoxA(0, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
     } 
-
+    
     if(!Win32OpenGL->wglCreateContextAttribsARB||
        !Win32OpenGL->wglChoosePixelFormatARB) 
     {
@@ -232,7 +232,7 @@ Win32ProcessInputMessages(MSG Message,
         {
             GlobalRunning = false;
         }
-
+        
         switch(Message.message) 
         {
             case WM_SYSKEYDOWN:
@@ -249,8 +249,8 @@ Win32ProcessInputMessages(MSG Message,
                 Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
                 Key->JustReleased = !Key->JustReleased && Key->IsDown && !IsDown;
                 Key->IsDown = IsDown;
-
-
+                
+                
                 bool AltKeyIsDown = ((Message.lParam & (1 << 29)) !=0);
                 if(VKCode == VK_F4 && AltKeyIsDown) 
                 {
@@ -268,7 +268,7 @@ Win32ProcessInputMessages(MSG Message,
             {
                 uint32 VKCode = (uint32)Message.wParam;
                 bool IsDown = (GetKeyState(VKCode) & (1 << 15));
-
+                
                 KeyCodeID KeyCode = State->KeyCodeLookup[Message.wParam];
                 Key *Key = &GameInput->Keyboard.Keys[KeyCode];
                 Key->JustPressed = !Key->JustPressed && !Key->IsDown && IsDown;
@@ -293,11 +293,11 @@ WinMain(HINSTANCE hInstance,
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
     int64 PerfCountFrequency = PerfCountFrequencyResult.QuadPart;
-
+    
     WNDCLASS Window = {};
     Win32OpenGLFunctions Win32OpenGL = {};
     Win32_WindowData WindowData = {};
-
+    
     Window.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     Window.lpfnWndProc = Win32MainWindowCallback;
     Window.hInstance = hInstance;
@@ -309,22 +309,22 @@ WinMain(HINSTANCE hInstance,
         WindowData.Y = 100;
         WindowData.WindowWidth = 1280;
         WindowData.WindowHeight = 720;
-
+        
         // NOTE : This Initializes OpenGL so we can make the next context
         Win32InitializeOpenGL(hInstance, Window, &Win32OpenGL);
         // NOTE : Then we create the real OpenGL Context
         HWND WindowHandle = 
             CreateWindow(Window.lpszClassName,
-                    "Sugar Framework", 
-                    WS_OVERLAPPEDWINDOW|WS_VISIBLE,
-                    WindowData.X,
-                    WindowData.Y,
-                    WindowData.WindowWidth,
-                    WindowData.WindowHeight,
-                    0,
-                    0,
-                    hInstance,
-                    0);
+                         "Sugar Framework", 
+                         WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+                         WindowData.X,
+                         WindowData.Y,
+                         WindowData.WindowWidth,
+                         WindowData.WindowHeight,
+                         0,
+                         0,
+                         hInstance,
+                         0);
         HDC WindowDC = GetDC(WindowHandle);
         const int PixelAttributes[] = 
         {
@@ -353,7 +353,7 @@ WinMain(HINSTANCE hInstance,
             MessageBoxA(0, "Failed to set the pixel format!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to set the main PixelFormat\n");
         }
-
+        
         const int ContextAttributes[] = 
         {
             WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
@@ -362,29 +362,29 @@ WinMain(HINSTANCE hInstance,
             WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
             0
         };
-
+        
         HGLRC RenderingContext = Win32OpenGL.wglCreateContextAttribsARB(WindowDC, 0, ContextAttributes);
         if(!RenderingContext) 
         {
             MessageBoxA(0, "Failed to set the Rendering Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to create the RenderingContext\n");
         }
-
+        
         if(!wglMakeCurrent(WindowDC, RenderingContext)) 
         {
             MessageBoxA(0, "Failed to set the Make the current the Context!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             Assert(false, "Failed to make current wglMakeCurrent(WindowDc, RenderingContext)\n");
         }
-
+        
         // NOTE : VSYNC
         Win32OpenGL.wglSwapIntervalEXT(0);
         // NOTE : VSYNC
-
+        
         if(WindowHandle) 
         {
             GameState GameState = {};
-            GameState.GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(100));
-            GameState.GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(1000));
+            GameState.GameMemory.PermanentStorage = MakeBumpAllocator(Megabytes(300));
+            GameState.GameMemory.TransientStorage = MakeBumpAllocator(Megabytes(300));
             GameState.KeyCodeLookup[KEY_COUNT] = {};
             GameState.IsInitialized = 0;
             
@@ -399,21 +399,27 @@ WinMain(HINSTANCE hInstance,
             {
                 MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
             }
+            
             GameState.LowEntities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
             if(!GameState.LowEntities) 
             {
                 MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
             }
-
+            
+            GameState.Level = (Level *)BumpAllocate(&GameState.GameMemory.PermanentStorage, WORLD_GRID.x * sizeof(Level));
+            if(!GameState.Level)
+            {
+                Assert(false, "Failed to create Level Memory");
+            }
             // INITIALIZE
             char *SourceDLLName = "GameCode.dll";
             InitializeOpenGLRenderer(&GameState);
             Win32LoadKeyData(&GameState); 
             Win32GameCode Game = Win32LoadGamecode(SourceDLLName);
             GlobalRunning = true;
-
+            
             WindowData.WindowDC = GetDC(WindowHandle);
-
+            
             LARGE_INTEGER LastCounter;            
             QueryPerformanceCounter(&LastCounter);
             // TODO : Two functions are needed. Update(), and FixedUpdate(). 
@@ -428,7 +434,7 @@ WinMain(HINSTANCE hInstance,
             GameInput.Keyboard.Bindings[MOVE_LEFT].Key = KEY_A;
             GameInput.Keyboard.Bindings[MOVE_RIGHT].Key = KEY_D;
             GameInput.Keyboard.Bindings[ATTACK].Key = KEY_MOUSE_LEFT;
-
+            
             XInputPointers XInput = Win32LoadXInput("XInput1_4.dll");
             if(!XInput.SetState,
                !XInput.GetState) 
@@ -436,7 +442,7 @@ WinMain(HINSTANCE hInstance,
                 MessageBoxA(0, "Failed to load WGL Functions!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
                 MessageBoxA(0, "Failed to set the XInput Pointers!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
-
+            
             real32 SimulationDelta = {};
             while(GlobalRunning) 
             {
@@ -454,11 +460,11 @@ WinMain(HINSTANCE hInstance,
                 {
                     Game.InitData(&GameState);
                 }
-
+                
                 MSG Message = {};
                 WindowData.WindowWidth = ClientWidth;
                 WindowData.WindowHeight = ClientHeight;
-
+                
                 // TODO : Determine whether or not it's a mistake to use "ms" for the unit
                 if(SimulationDelta >= SIMRATE) 
                 {
@@ -466,7 +472,7 @@ WinMain(HINSTANCE hInstance,
                     {
                         SimulationDelta = SIMRATE;
                     }
-
+                    
                     // MESSAGES
                     Win32ProcessInputMessages(Message, WindowHandle, &GameInput, &GameState);
                     
@@ -482,7 +488,7 @@ WinMain(HINSTANCE hInstance,
                     
                     real32 InterpolateDelta = SimulationDelta / SIMRATE; 
                     iVLerp(GameInput.Keyboard.CurrentMouse, GameInput.Keyboard.LastMouse, InterpolateDelta);
-
+                    
                     for(DWORD ControllerIndex = 0; 
                         ControllerIndex < 1; 
                         ++ControllerIndex) 
@@ -491,7 +497,7 @@ WinMain(HINSTANCE hInstance,
                         if(XInput.GetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS) 
                         {   
                             XINPUT_GAMEPAD *Pad = &ControllerState.Gamepad;
-
+                            
                             bool DPadUp = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
                             bool DPadDown = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
                             bool DPadLeft = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
@@ -506,14 +512,14 @@ WinMain(HINSTANCE hInstance,
                             bool BButton = (Pad->wButtons & XINPUT_GAMEPAD_B);
                             bool XButton = (Pad->wButtons & XINPUT_GAMEPAD_X);
                             bool YButton = (Pad->wButtons & XINPUT_GAMEPAD_Y);
-
+                            
                             uint8 LeftTrigger = Pad->bLeftTrigger;
                             uint8 RightTrigger = Pad->bRightTrigger;
                             int16 LeftStickX = Pad->sThumbLX;
                             int16 LeftStickY = Pad->sThumbLY;
                             int16 RightStickX = Pad->sThumbRX;
                             int16 RightStickY = Pad->sThumbRY;
-
+                            
                             XINPUT_VIBRATION Vibration = {};    
                             Vibration.wLeftMotorSpeed = 6500;
                             Vibration.wRightMotorSpeed = 6500;
@@ -525,7 +531,7 @@ WinMain(HINSTANCE hInstance,
                         }
                     }
                 }
-
+                
 #ifdef SUGAR_SLOW
                 // TODO : This will eventually go inside of out "Update()" loop
                 Game.UpdateAndRender(&GameState, &GameInput);
@@ -533,20 +539,20 @@ WinMain(HINSTANCE hInstance,
                 GameUpdateAndRender(&GameState, &GameInput);
 #endif
                 OpenGLRender(&GameState, &WindowData);
-
+                
                 // RESET MEMORY
                 BumpReset(&GameState.GameMemory.TransientStorage);
-
+                
                 // DELTA TIME
                 LARGE_INTEGER EndCounter;
                 QueryPerformanceCounter(&EndCounter);
                 int64 DeltaCounter = EndCounter.QuadPart - LastCounter.QuadPart;    
                 real32 MSPerFrame = (1000 * (real32)DeltaCounter) / (real32)PerfCountFrequency;
                 int32 FPS = (int32)PerfCountFrequency / (int32)DeltaCounter;
-
+                
                 SimulationDelta += MSPerFrame;       // DELTA TIME
                 LastCounter = EndCounter;
-
+                
                 // PERFORMANCE PROFILING
                 char Buffer[256];
                 sprintf(Buffer, "%.02fms, FPS: %d\n", MSPerFrame, FPS);

@@ -5,6 +5,14 @@
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "Sugar_ECS.h"
+#include "Sugar_Input.h"
+
+
+extern "C"
+{
+#include "../data/deps/JSON/cJSON.h"
+#include "../data/deps/JSON/cJSON_Utils.h"
+}
 
 #define s_Size(Array, Type) (sizeof(Array) / sizeof(Type))
 
@@ -58,11 +66,11 @@ GetSprite(SpriteID SpriteID)
             Sprite.AtlasOffset = {0, 0};
             Sprite.SpriteSize = {16, 16};
         }break;
-        case SPRITE_TILE: 
+        case SPRITE_FLOOR:
         {
             Sprite.AtlasOffset = {16, 0};
             Sprite.SpriteSize = {16, 16};
-        }
+        }break;
     }
     return(Sprite);
 }
@@ -89,8 +97,85 @@ DrawEntity(GameState *State, uint32 Index)
                State->RenderData);
 }
 
-internal void
-DestroyEntity(GameState *State, uint32 Index) 
+
+internal void 
+CreateTileFromGrid(ivec2 GridPosition, Input *Input, GameState *State)
 {
-    State->HighEntities[Index] = {};
+    Entity Tile = {0};
+    Tile.Sprite.SpriteID = SPRITE_FLOOR;
+    Tile.Flags = ACTIVE | IS_STATIC | TILE | RENDERABLE | IS_VISIBLE;
+    Tile.Transform.CurrentPosition = v2Convert(GridPosition) * TILE_SIZE;
+    
+    State->Level->Tilemap[GridPosition.x][GridPosition.y] = Tile;
 }
+
+
+internal void
+DrawTileSprite(Entity *Tile, GameState *State)
+{
+    Sprite Sprite = GetSprite(Tile->Sprite.SpriteID);
+    Transform Transform = {0};
+    Transform.Position = (Tile->Transform.CurrentPosition) - v2Cast(Sprite.SpriteSize / 2);
+    Transform.Size = v2Convert(Sprite.SpriteSize);
+    Transform.AtlasOffset = (Sprite.AtlasOffset);
+    Transform.SpriteSize = Sprite.SpriteSize;
+    
+    State->RenderData->Transforms[State->RenderData->TransformCount++] = Transform;
+}
+
+// TODO(Sleepster): Rename to SugarGlider
+internal Entity *
+GetTile(ivec2 GridPos, GameState *State)
+{
+    Entity *Tile = {};
+    Tile = &State->Level->Tilemap[GridPos.x][GridPos.y];
+    return(Tile);
+}
+
+internal void 
+TestFunction(void)
+{
+}
+
+#if 0
+
+internal Entity *
+GetTile(vec2 WorldPos, GameState *State)
+{
+    ivec2 GridPos = iv2Cast(WorldPos) / TILE_SIZE;
+    return(GetTile(GridPos, State));
+}
+
+internal ivec2 
+CursorToWorldPosition(Input *Input)
+{
+    ivec2 Result = Input->Keyboard.CurrentMouse / TILE_SIZE;
+    return(Result);
+}
+
+internal void 
+CreateTile(vec2 WorldPosition, Input *Input, GameState *State)
+{
+    Entity Tile = {0};
+    Tile.Sprite.SpriteID = SPRITE_FLOOR;
+    Tile.Flags = ACTIVE | IS_STATIC | TILE | RENDERABLE | IS_VISIBLE;
+    Tile.Transform.CurrentPosition = WorldPosition;
+    
+    ivec2 GridPosition = iv2Cast(WorldPosition) / TILE_SIZE;
+    State->Level->Tilemap[GridPosition.x][GridPosition.y] = Tile;
+}
+
+
+internal void
+DestroyEntity(GameState *State, EntityType Order, uint32 Index) 
+{
+    if(Order == HIGH_ORDER)
+    {
+        State->HighEntities[Index] = {0};
+    }
+    else
+    {
+        State->LowEntities[Index] = {0};
+    }
+}
+#endif

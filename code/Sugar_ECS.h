@@ -30,6 +30,39 @@ enum EntityFlags
     IS_VISIBLE   = 1 << 8,
 };
 
+enum TileType 
+{
+    FLOOR1 = 1 << 0,
+    FLOOR2 = 1 << 1,
+    FLOOR3 = 1 << 2,
+    FLOOR4 = 1 << 3, 
+    WALL1  = 1 << 4,
+    WALL2  = 1 << 5,
+    WALL3  = 1 << 6,
+    WALL4  = 1 << 7,
+    
+    TYPECOUNT
+};
+
+enum SpriteID 
+{
+    SPRITE_DICE,
+    SPRITE_WALL,
+    SPRITE_FLOOR,
+    SPRITE_COUNT
+};
+
+enum EntityType
+{
+    HIGH_ORDER,
+    LOW_ORDER,
+};
+
+struct Sprite
+{
+    ivec2 AtlasOffset;
+    ivec2 SpriteSize;
+};
 
 struct TransformComponent 
 {
@@ -43,11 +76,11 @@ struct TransformComponent
 struct PhysicsShape 
 { 
     ShapeType ShapeType;
-
+    
     vec2 VertexPositions[MAX_VERTICES];
     vec2 VertexNormals[MAX_VERTICES];
     int32 VertexCount;
-
+    
     real32 Radius;
 };
 
@@ -74,13 +107,15 @@ struct SpriteComponent
 struct NeighborComponent 
 { 
     BYTE NeighborCount;
+    BYTE TileType;
 };
 
 // MEGA STRUCT WILL HOLD EVERYTHING FOR NOW
 struct Entity 
 {
+    EntityType Order;
     uint64 Flags;
-
+    
     PhysicsComponent Physics;
     TransformComponent Transform;
     ColliderComponent Collider;
@@ -97,6 +132,7 @@ struct Player : Entity
 
 struct Tile : Entity 
 {
+    TileType Type;
     NeighborComponent NeighborCount; 
 };
 
