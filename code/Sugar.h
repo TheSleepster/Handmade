@@ -9,7 +9,7 @@
 #define WORLD_WIDTH 160
 #define WORLD_HEIGHT 90
 
-constexpr int TILE_SIZE = 16;
+constexpr int32 TILE_SIZE = 16;
 constexpr ivec2 WORLD_GRID = {WORLD_WIDTH / 2, WORLD_HEIGHT / 2};
 
 struct GameMemory 
@@ -48,6 +48,19 @@ struct Level
     bool Active;
 };
 
+struct LDTKLevel
+{
+    bool Active;
+    int32 LevelIdentifier;
+    
+    ivec2 LevelSize;
+    ivec2 Offset;
+    const char **Layers;
+    
+    int32 EntityCount;
+    Entity *Entities;
+};
+
 struct GameState 
 {
     // MEMORY
@@ -66,6 +79,8 @@ struct GameState
     
     // MAP DATA
     Level *Level;
+    
+    LDTKLevel **Levels;
     SimulationRegion *SimRegion;
     
     // CAMERA MODE

@@ -23,6 +23,20 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     CreateEntity(SPRITE_DICE, {160, 90}, {1.0f, 1.0f}, 0, State->HighEntities);
     DrawEntity(State, 0);
     
+    JSONToken *Token = {};
+    JSONParser *Parser = {};
+    const char *Buffer = {};
+    
+    JSONParseLevel(Buffer, int32(strlen(Buffer)), Parser, Token);
+    
+    
+    
+    
+    
+    
+    
+    
+#if 0    
     for(int i = 0; i < WORLD_GRID.x;++i)
     {
         for(int j = 0; j < WORLD_GRID.y;++j)
@@ -31,6 +45,5 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
             DrawTileSprite(GetTile(ivec2{i, j}, State), State);
         }
     }
-    
-    TestFunction();
+#endif
 }

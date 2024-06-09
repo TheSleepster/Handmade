@@ -26,10 +26,10 @@ struct Win32GameCode
 {
     HMODULE GameCodeDLL;
     FILETIME DLLLastWriteTime;
-
+    
     game_update_and_render *UpdateAndRender;
     init_game_data *InitData;
-
+    
     bool IsValid;
     bool IsLoaded;
 };
@@ -54,11 +54,11 @@ struct XInputPointers
     xinput_set_state *SetState;
 };
 
-inline FILETIME
+internal inline FILETIME
 Win32GetLastWriteTime(const char *Filename) 
 {
     FILETIME LastWriteTime = {};
-
+    
     WIN32_FIND_DATA FindData;
     HANDLE FindHandle = FindFirstFileA(Filename, &FindData);
     if(FindHandle != INVALID_HANDLE_VALUE) 
@@ -66,11 +66,11 @@ Win32GetLastWriteTime(const char *Filename)
         LastWriteTime = FindData.ftLastWriteTime;
         FindClose(FindHandle);
     }
-
+    
     return(LastWriteTime);
 }
 
-inline FILETIME
+internal inline FILETIME
 maxFiletime(FILETIME a, FILETIME b) 
 {
     if(CompareFileTime(&a, &b) != 0) 
@@ -80,7 +80,7 @@ maxFiletime(FILETIME a, FILETIME b)
     return(b);
 }
 
-inline int32
+internal inline int32
 GetFileSizeInBytes(const char *Filepath) 
 {
     int32 FileSize = 0;
@@ -90,41 +90,41 @@ GetFileSizeInBytes(const char *Filepath)
     FileSize = ftell(File);
     fseek(File, 0, SEEK_SET);
     fclose(File);
-
+    
     return(FileSize);
 }
 
-inline char *
-ReadEntireFile(const char *Filepath, int *Size, char *Buffer) 
+internal inline char *
+ReadEntireFile(const char *Filepath, int32 *Size, char *Buffer) 
 {
     Assert(Filepath != nullptr, "Cannot find the file designated!\n");
     Assert(Buffer != nullptr, "Provide a valid buffer!\n");
     Assert(Size >= 0, "Size is less than 0!\n");
-
+    
     *Size = 0;
     FILE *File = fopen(Filepath, "rb");
-
+    
     fseek(File, 0, SEEK_END);
     *Size = ftell(File);
     fseek(File, 0, SEEK_SET);
-
+    
     memset(Buffer, 0, *Size + 1);
     fread(Buffer, sizeof(char), *Size, File);
-
+    
     fclose(File);
     return(Buffer);
 }
 
-inline char *
-ReadEntireFileBA(const char *Filepath, int *FileSize, BumpAllocator *BumpAllocator) 
+internal inline char *
+ReadEntireFileBA(const char *Filepath, int32 *FileSize, BumpAllocator *BumpAllocator) 
 {
     char *File = nullptr; 
     int32 FileSize2 = GetFileSizeInBytes(Filepath);
     Assert(FileSize2 >= 0, "FileSize is less than 0!\n");
-
+    
     char *Buffer = BumpAllocate(BumpAllocator, size_t(FileSize2 + 1));
     File = ReadEntireFile(Filepath, FileSize, Buffer);
-
+    
     return(File);
 }
 

@@ -7,11 +7,10 @@
 #include "Sugar_ECS.h"
 #include "Sugar_Input.h"
 
-
 extern "C"
 {
 #include "../data/deps/JSON/cJSON.h"
-#include "../data/deps/JSON/cJSON_Utils.h"
+#include "../data/deps/JSON/cJSON.c"
 }
 
 #define s_Size(Array, Type) (sizeof(Array) / sizeof(Type))
@@ -97,7 +96,69 @@ DrawEntity(GameState *State, uint32 Index)
                State->RenderData);
 }
 
+// JSON PARSING?
+// TODO(Sleepster): Optional LDTK JSON for SSE
+enum JSONTokenType
+{
+    TOKEN_UNDEFINED = 0,
+    TOKEN_STRING    = 1 << 0,
+    TOKEN_ARRAY     = 1 << 1,
+    TOKEN_OBJECT    = 1 << 2,
+    TOKEN_PRIMATIVE = 1 << 3
+};
 
+enum JSONError
+{
+    ERROR_NOMEM = -1,
+    ERROR_INVAL = -2,
+    ERROR_PART  = -3
+};
+
+struct JSONToken
+{
+    JSONTokenType TokenType;
+    int32 Start;
+    int32 End;
+    int32 Size;
+};
+
+struct JSONParser
+{
+    uint32 Position;
+    uint32 NextToken;
+    int32 ParentToken;
+};
+
+internal void
+JSONParseString(const char *Buffer, int32 Length, 
+                int32 Position, JSONToken *Token)
+{
+}
+
+internal void
+JSONParseLevel(const char *Buffer, int32 Length, 
+               JSONParser *Parser, JSONToken *Token)
+{
+    int32 Position = {};
+    
+    for(; Position < Length && Buffer[Position] != '\0'; ++Position)
+    {
+        char C = Buffer[Position];
+        
+        switch(C)
+        {
+            case '\"':
+            {
+                JSONToken TempToken = {TOKEN_STRING};
+                ++Position;
+                JSONParseString(Buffer, Length, Position, &TempToken);
+                
+            }break;
+        }
+    }
+}
+
+#if 0
 internal void 
 CreateTileFromGrid(ivec2 GridPosition, Input *Input, GameState *State)
 {
@@ -132,13 +193,6 @@ GetTile(ivec2 GridPos, GameState *State)
     return(Tile);
 }
 
-internal void 
-TestFunction(void)
-{
-}
-
-#if 0
-
 internal Entity *
 GetTile(vec2 WorldPos, GameState *State)
 {
@@ -164,7 +218,6 @@ CreateTile(vec2 WorldPosition, Input *Input, GameState *State)
     ivec2 GridPosition = iv2Cast(WorldPosition) / TILE_SIZE;
     State->Level->Tilemap[GridPosition.x][GridPosition.y] = Tile;
 }
-
 
 internal void
 DestroyEntity(GameState *State, EntityType Order, uint32 Index) 
