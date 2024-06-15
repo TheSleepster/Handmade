@@ -23,5 +23,7 @@ GAME_UPDATE_AND_RENDER(GameUpdateAndRender)
     State->RenderData->PlayerCamera.Position = {160, -90};
     
     CreateEntity(Entity_Dice, {160, 90}, 0, State);
+    PromoteEntityToHighRange(0, State);
     DrawEntity(0, 1, State);
+    DemoteEntityToLowRange(0, State);
 }

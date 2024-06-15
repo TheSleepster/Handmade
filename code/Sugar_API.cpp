@@ -6,18 +6,16 @@
 #include "SugarAPI.h"
 #include "Sugar_Input.h"
 
+#define ArrayCount(Array, Type) (sizeof(Array) / sizeof(Type))
+
 extern "C"
 {
 #include "../data/deps/JSON/cJSON.h"
 #include "../data/deps/JSON/cJSON.c"
 }
 
-#define ArrayCount(Array, Type) (sizeof(Array) / sizeof(Type))
-
-// NOTE :
-// Perhaps a better idea for dynamic arrays is too not have them at all,
-// and Instead when we want to add an entity, simply check if it's index is nullptr then overwrite it.
-// then have an iterator that's checking to see if the entity is alive. If it's dead, set it to nullptr.
+// NOTE(Sleepster): Entities will be store in High/Low ranges sorted by how close/far they are to the player. High Range Entities will update
+// more Frequently than that of their Low Range counterparts. 
 
 internal Sprite 
 GetSprite(SpriteID SpriteID) 
@@ -48,30 +46,18 @@ PromoteEntityToHighRange(int32 LowIndex, GameState *State)
     
     if(!(State->HighEntityCount < ArrayCount(State->HighEntities, HighEntity)))
     {
-        uint32 HighIndex = State->HighEntityCount++;
+        uint32 HighIndex = EntityLow->HighEntityIndex;
         HighEntity *EntityHigh = &State->HighEntities[HighIndex];
+        
+        EntityHigh->Sprite.SpriteID = EntityLow->Sprite.SpriteID;
+        EntityHigh->Transform.Size = EntityLow->Transform.Size;
+        EntityHigh->Transform.CurrentPosition = EntityLow->Transform.CurrentPosition;
         
         EntityLow->HighEntityIndex = HighIndex;
     }
     else
     {
         Trace("Invalid Code Path\n");
-    }
-}
-
-// TODO(Sleepster): Free List perhaps? This would store "Freed" Elements, they would be the first to be overwritten with new data
-internal void
-DemoteEntityToLowRange(int32 HighIndex, GameState *State)
-{
-    HighEntity *EntityHigh = &State->HighEntities[HighIndex];
-    
-    // TODO(Sleepster): Finish this function
-    if(!(State->LowEntityCount < ArrayCount(State->LowEntities, LowEntity)))
-    {
-        uint32 LowIndex = State->LowEntityCount++;
-        LowEntity *EntityLow = &State->LowEntities[LowIndex];
-        
-        EntityHigh->LowEntityIndex = LowIndex;
     }
 }
 
@@ -82,6 +68,22 @@ ClearEntity(GameState *State, uint32 EntityIndex)
     State->HighEntities[EntityIndex] = {0};
     State->LowEntities[EntityIndex].HighEntityIndex = EntityIndex;
     State->HighEntities[EntityIndex].LowEntityIndex = EntityIndex;
+}
+
+// TODO(Sleepster): Free List perhaps? This would store "Freed" Elements, they would be the first to be overwritten with new data
+// Similar in idea to the Memory Arena's freelist
+internal void
+DemoteEntityToLowRange(int32 HighIndex, GameState *State)
+{
+    HighEntity *EntityHigh = &State->HighEntities[HighIndex];
+    
+    if(!(State->LowEntityCount < ArrayCount(State->LowEntities, LowEntity)))
+    {
+        uint32 LowIndex = State->LowEntityCount++;
+        LowEntity *EntityLow = &State->LowEntities[LowIndex];
+        
+        EntityHigh->LowEntityIndex = LowIndex;
+    }
 }
 
 internal Entity
@@ -113,10 +115,10 @@ DrawStaticEntitySprite(Entity *Entity, int8 Scale, RenderData *RenderData)
 {
     Transform transform = {0};
     
-    transform.Position = Entity->Low->Transform.CurrentPosition;
-    transform.Size = v2Cast(Entity->Low->Sprite.SpriteID.SpriteSize) * Scale;
-    transform.AtlasOffset = Entity->Low->Sprite.SpriteID.AtlasOffset;
-    transform.SpriteSize = Entity->Low->Sprite.SpriteID.SpriteSize;
+    transform.Position = Entity->High->Transform.CurrentPosition;
+    transform.Size = v2Cast(Entity->High->Sprite.SpriteID.SpriteSize) * Scale;
+    transform.AtlasOffset = Entity->High->Sprite.SpriteID.AtlasOffset;
+    transform.SpriteSize = Entity->High->Sprite.SpriteID.SpriteSize;
     
     RenderData->Transforms[RenderData->TransformCount++] = transform;
 }
