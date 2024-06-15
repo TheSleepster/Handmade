@@ -32,7 +32,6 @@
 #include "Sugar.h"
 #include "SugarAPI.h"
 #include "Sugar_Input.h"
-#include "Sugar_ECS.h"
 
 #define NOMINMAX
 #include <windows.h>
@@ -394,23 +393,15 @@ WinMain(HINSTANCE hInstance,
                 MessageBoxA(WindowHandle, "Failed to set the Allocate memory!", "WGLOpenGL Issues", MB_ABORTRETRYIGNORE); 
             }
             
-            GameState.HighEntities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
-            if(!GameState.HighEntities) 
+            GameState.HighEntities = (HighEntity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(HighEntity) * 512);
+            GameState.LowEntities = (LowEntity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(HighEntity) * 8192);
+            
+            GameState.World = (World *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(World));
+            if(!GameState.World)
             {
-                MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
+                Assert(false, "Failed To Allocate WorldData\n");
             }
             
-            GameState.LowEntities = (Entity *)BumpAllocate(&GameState.GameMemory.PermanentStorage, sizeof(Entity) * MAX_ENTITIES);
-            if(!GameState.LowEntities) 
-            {
-                MessageBoxA(WindowHandle, "Failed to allocate memory for the entities!\n", "Lol programmer sux", MB_ABORTRETRYIGNORE);
-            }
-            
-            GameState.Level = (Level *)BumpAllocate(&GameState.GameMemory.PermanentStorage, WORLD_GRID.x * sizeof(Level));
-            if(!GameState.Level)
-            {
-                Assert(false, "Failed to create Level Memory");
-            }
             // INITIALIZE
             char *SourceDLLName = "GameCode.dll";
             InitializeOpenGLRenderer(&GameState);

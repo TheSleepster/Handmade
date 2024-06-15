@@ -6,7 +6,7 @@ REM ============================================================================
 REM /Ot /O2 for release
 REM remove -Zi
 
-Set CommonCompilerFlags=-nologo -GR- -EHa- -Od -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100 -wd4201
+Set CommonCompilerFlags=-DENGINE=1 -nologo -GR- -EHa- -Od -Oi -Zi -W4 -wd4189 -wd4200 -wd4996 -wd4706 -wd4530 -wd4100 -wd4201
 Set CommonLinkerFlags=-incremental:no kernel32.lib user32.lib gdi32.lib opengl32.lib -SUBSYSTEM:WINDOWS -ENTRY:WinMainCRTStartup
 
 IF NOT EXIST ..\build mkdir ..\build

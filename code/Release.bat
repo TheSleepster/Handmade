@@ -10,5 +10,5 @@ Set CommonLinkerFlags=-incremental:no -OPT:REF kernel32.lib user32.lib gdi32.lib
 IF NOT EXIST ..\build mkdir ..\build
 pushd ..\build
 del *.pdb
-cl -DSUGAR_SLOW=0 -std:c++14 ../code/win32_Sugar.cpp -MT %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"../data/Handmade.exe" 
+cl -DSUGAR_SLOW=0 ../code/win32_Sugar.cpp -MT %CommonCompilerFlags% -link %CommonLinkerFlags% -OUT:"../data/Handmade.exe" 
 popd

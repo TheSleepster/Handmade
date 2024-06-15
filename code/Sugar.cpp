@@ -14,36 +14,14 @@ INIT_GAME_DATA(InitGameData)
 {
 }
 
+// NOTE(Sleepster): The plan now is to just create our OWN EDITOR that we will eventually be able to serialize the data for somehow.
+
 extern "C" 
 GAME_UPDATE_AND_RENDER(GameUpdateAndRender) 
 {
     State->RenderData->PlayerCamera.Viewport = {WORLD_WIDTH, WORLD_HEIGHT};
     State->RenderData->PlayerCamera.Position = {160, -90};
     
-    CreateEntity(SPRITE_DICE, {160, 90}, {1.0f, 1.0f}, 0, State->HighEntities);
-    DrawEntity(State, 0);
-    
-    JSONToken *Token = {};
-    JSONParser *Parser = {};
-    const char *Buffer = {};
-    
-    JSONParseLevel(Buffer, int32(strlen(Buffer)), Parser, Token);
-    
-    
-    
-    
-    
-    
-    
-    
-#if 0    
-    for(int i = 0; i < WORLD_GRID.x;++i)
-    {
-        for(int j = 0; j < WORLD_GRID.y;++j)
-        {
-            CreateTileFromGrid({i, j}, GameInput, State);
-            DrawTileSprite(GetTile(ivec2{i, j}, State), State);
-        }
-    }
-#endif
+    CreateEntity(Entity_Dice, {160, 90}, 0, State);
+    DrawEntity(0, 1, State);
 }

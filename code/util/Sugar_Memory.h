@@ -27,11 +27,11 @@ struct BumpAllocator
     size_t Capacity;
     size_t Used;
     char* Memory;
-
+    
     FreeList *FreeList;
 };
 
-inline BumpAllocator 
+internal inline BumpAllocator 
 MakeBumpAllocator(size_t Size) 
 {
     BumpAllocator BumpAllocator = {};
@@ -43,11 +43,11 @@ MakeBumpAllocator(size_t Size)
         memset(BumpAllocator.Memory, 0, Size);
     }
     Assert(BumpAllocator.Memory, "Failed to create the BumpAllocator!\n");
-
+    
     return(BumpAllocator);
 }
 
-inline char *
+internal inline char *
 BumpAllocate(BumpAllocator *BumpAllocator, size_t Size) 
 {
     char *Result = nullptr;
@@ -56,10 +56,10 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
     {
         FreeList *Chunk = BumpAllocator->FreeList;
         BumpAllocator->FreeList = Chunk->NextChunk;
-
+        
         return((char *)Chunk);
     }
-
+    
     if(BumpAllocator->Used + AllignedSize <= BumpAllocator->Capacity) 
     {
         Result = BumpAllocator->Memory + BumpAllocator->Used;
@@ -69,7 +69,7 @@ BumpAllocate(BumpAllocator *BumpAllocator, size_t Size)
     return(Result);
 }
 
-inline void
+internal inline void
 BumpDeallocate(BumpAllocator *BumpAllocator, void *Data) 
 {
     FreeList *FreeList = (struct FreeList *)Data;
@@ -77,14 +77,14 @@ BumpDeallocate(BumpAllocator *BumpAllocator, void *Data)
     BumpAllocator->FreeList = FreeList;
 }
 
-inline void 
+internal inline void 
 BumpReset(BumpAllocator *BumpAllocator) 
 {
     BumpAllocator->Used = 0;
     BumpAllocator->FreeList = 0;
 }
 
-inline void 
+internal inline void 
 BumpDestroy(BumpAllocator *BumpAllocator) 
 {
     VirtualFree(&BumpAllocator, sizeof(BumpAllocator->Memory), MEM_RELEASE);

@@ -4,7 +4,6 @@
 #include "Sugar.h"
 #include "SugarAPI.h"
 
-#include "Sugar_ECS.h"
 
 internal vec2
 AveragePoint(ColliderComponent *A) 

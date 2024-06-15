@@ -3,11 +3,11 @@
 #include "util/Sugar_Memory.h"
 #include "Sugar_Input.h"
 #include "SugarAPI.h"
-#include "Sugar_ECS.h"
 #include "../data/deps/OpenGL/GLL.h"
 
 #define WORLD_WIDTH 160
 #define WORLD_HEIGHT 90
+#define MAX_VERTICES 24
 
 constexpr int32 TILE_SIZE = 16;
 constexpr ivec2 WORLD_GRID = {WORLD_WIDTH / 2, WORLD_HEIGHT / 2};
@@ -36,29 +36,130 @@ struct glContext
     FILETIME ShaderTimestamp;
 };
 
-struct SimulationRegion 
-{
-    ivec2 SimulationSize;
-    struct SimulationRegion *NextRegion;
+enum ShapeType
+{ 
+    CIRCLE     = 0x0,
+    BOX        = 0x1,
+    PENTAGON   = 0x2,
+    HEXAGON    = 0x3,
 };
 
-struct Level
+enum EntityFlags 
 {
+    ACTIVE       = 0x0,
+    PLAYER       = 0x1,
+    IS_STATIC    = 0x2,
+    AI           = 0x3,
+    TILE         = 0x4,
+    HAS_PHYSICS  = 0x5,
+    RENDERABLE   = 0x6,
+    IS_DEAD      = 0x7,
+    IS_VISIBLE   = 0x8,
+};
+
+enum SpriteID 
+{
+    SPRITE_DICE,
+    SPRITE_WALL,
+    SPRITE_FLOOR,
+    SPRITE_COUNT
+};
+
+struct Sprite
+{
+    ivec2 AtlasOffset;
+    ivec2 SpriteSize;
+};
+
+struct TransformComponent 
+{
+    vec2 PreviousPosition;
+    vec2 CurrentPosition;
+    vec2 Size;
+};
+
+struct PhysicsShape 
+{ 
+    ShapeType ShapeType;
+    
+    vec2 VertexPositions[MAX_VERTICES];
+    vec2 VertexNormals[MAX_VERTICES];
+    int32 VertexCount;
+    
+    real32 Radius;
+};
+
+struct PhysicsComponent 
+{
+    vec2 PreviousVelocity;
+    vec2 CurrentVelocity;
+    // Restitution is an indicator of how Elastic/Inelastic the collision is.
+    real32 Restitution;
+    real32 Density;
+    real32 Area;
+    //real32 Rotation;
+};
+
+struct ColliderComponent 
+{
+    vec2 Vertices[8];
+    int VertexCount;
+};
+
+struct SpriteComponent 
+{
+    Sprite SpriteID;
+};
+
+struct NeighborComponent 
+{ 
+    BYTE NeighborCount;
+    BYTE TileType;
+};
+
+enum EntityType
+{
+    Entity_Dice,
+    Entity_Tile,
+};
+
+// TODO(Sleepster): Decide what EXACTLY seperates high/low entities, and what is different between the two
+struct LowEntity
+{
+    uint32 Flags;
+    
+    PhysicsComponent Physics;
+    TransformComponent Transform;
+    ColliderComponent Collider;
+    SpriteComponent Sprite;
+    NeighborComponent NeighborBit;
+    
+    uint32 HighEntityIndex;
+};
+
+struct HighEntity
+{
+    uint32 Flags;
+    
+    PhysicsComponent Physics;
+    TransformComponent Transform;
+    ColliderComponent Collider;
+    SpriteComponent Sprite;
+    NeighborComponent NeighborByte;
+    
+    uint32 LowEntityIndex;
+};
+
+struct Entity 
+{
+    HighEntity *High;
+    LowEntity *Low;
+};
+
+struct World
+{
+    bool Active;
     Entity Tilemap[WORLD_GRID.x][WORLD_GRID.y];
-    bool Active;
-};
-
-struct LDTKLevel
-{
-    bool Active;
-    int32 LevelIdentifier;
-    
-    ivec2 LevelSize;
-    ivec2 Offset;
-    const char **Layers;
-    
-    int32 EntityCount;
-    Entity *Entities;
 };
 
 struct GameState 
@@ -73,15 +174,16 @@ struct GameState
     RenderData *RenderData;
     
     // ENTITY DATA
-    Entity *HighEntities;     
-    Entity *LowEntities;
+    int32 HighEntityCount;
+    HighEntity *HighEntities;
+    
+    int32 LowEntityCount;
+    LowEntity *LowEntities;
+    
     Entity Player;
     
     // MAP DATA
-    Level *Level;
-    
-    LDTKLevel **Levels;
-    SimulationRegion *SimRegion;
+    World *World;
     
     // CAMERA MODE
     bool PlayerCamera;
